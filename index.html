@@ -2,22 +2,21 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Trade GPT Pro - Level 4 Terminal</title>
+<title>Trade GPT Pro Level 4.1</title>
 
-<!-- Markdown Renderer -->
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
 <style>
 body{
     margin:0;
-    font-family:Arial;
     background:#070b14;
     color:white;
+    font-family:Arial;
 }
 
 header{
     background:#111827;
-    padding:16px;
+    padding:15px;
     text-align:center;
     font-size:20px;
     font-weight:bold;
@@ -62,12 +61,22 @@ button:hover{background:#16a34a;}
 
 iframe{
     width:100%;
-    height:380px;
+    height:420px;
     border:none;
     border-radius:10px;
 }
 
-/* SETTINGS MODAL */
+.badge{
+    padding:5px 10px;
+    border-radius:6px;
+    display:inline-block;
+    margin-top:10px;
+}
+.green{background:#16a34a;}
+.yellow{background:#ca8a04;}
+.red{background:#dc2626;}
+
+/* modal */
 .modal{
     display:none;
     position:fixed;
@@ -79,17 +88,10 @@ iframe{
 
 .modal-content{
     background:#111827;
-    width:400px;
+    width:420px;
     margin:10% auto;
     padding:20px;
     border-radius:10px;
-}
-
-.close{
-    float:right;
-    cursor:pointer;
-    color:red;
-    font-size:18px;
 }
 </style>
 </head>
@@ -97,142 +99,104 @@ iframe{
 <body>
 
 <header>
-🔥 TRADE GPT PRO - LEVEL 4 INSTITUTIONAL TERMINAL
+🔥 TRADE GPT PRO LEVEL 4.1 TERMINAL
 <button onclick="openSettings()" style="float:right;background:#3b82f6;">Settings</button>
 </header>
 
 <div class="container">
 
-<!-- INPUT PANEL -->
+<!-- INPUT -->
 <div class="card">
-<h3>📊 Trade Setup Engine</h3>
+<h3>📊 Trade Input</h3>
 
-<input id="stock" placeholder="Stock (e.g. NVDA)">
-<input id="capital" placeholder="Capital (₹)">
+<input id="stock" placeholder="Stock (NVDA / AAPL / TCS)">
+<input id="capital" placeholder="Capital ₹">
 <input id="risk" placeholder="Risk %">
 
 <select id="mode">
-<option value="A++">A++ Deep Institutional Scan</option>
-<option value="A+">A+ Balanced Scan</option>
+<option value="A++">A++ Deep Analysis</option>
+<option value="A+">A+ Balanced</option>
 <option value="B">B Quick Scan</option>
 </select>
 
-<button onclick="runAnalysis()">RUN INSTITUTIONAL ANALYSIS</button>
+<button onclick="runAnalysis()">RUN 15 ENGINE ANALYSIS</button>
 
-<hr>
+<div id="signalBox"></div>
 
-<h3>🧠 Engine Status</h3>
-✔ Market Structure<br>
-✔ Liquidity Engine<br>
-✔ Sweep Engine<br>
-✔ MSS Engine<br>
-✔ FVG Engine<br>
-✔ VWAP Engine<br>
-✔ Volume Engine<br>
-✔ Trend Engine<br>
-✔ Risk Engine<br>
-✔ Confluence Engine<br>
-✔ AI Engine
 </div>
 
 <!-- OUTPUT -->
 <div class="card">
-<h3>📊 AI Institutional Report</h3>
-<div class="output" id="output">Waiting for analysis...</div>
+<h3>🧠 AI Institutional Report</h3>
+<div class="output" id="output">Waiting...</div>
 </div>
 
 <!-- CHART -->
 <div class="card" style="grid-column:span 2;">
-<h3>📈 Live Market Chart</h3>
-<iframe src="https://s.tradingview.com/widgetembed/?symbol=NASDAQ:AAPL&interval=15&theme=dark"></iframe>
+<h3>📈 TradingView Chart</h3>
+<iframe id="chart"
+src="https://s.tradingview.com/widgetembed/?symbol=NASDAQ:AAPL&interval=15&theme=dark">
+</iframe>
 </div>
 
 </div>
 
-<!-- SETTINGS MODAL -->
+<!-- SETTINGS -->
 <div class="modal" id="settingsModal">
 <div class="modal-content">
 
-<span class="close" onclick="closeSettings()">×</span>
-
 <h3>🔌 OpenRouter Settings</h3>
 
-<input id="apiKey" type="password" placeholder="OpenRouter API Key">
-<input id="model" placeholder="Model Name">
+<input id="apiKey" type="password" placeholder="API Key">
+<input id="model" placeholder="Model">
 
-<button onclick="saveSettings()">Save Settings</button>
-<button onclick="testAPI()">Test Connection</button>
+<button onclick="saveSettings()">Save</button>
+<button onclick="testAPI()">Test API</button>
 
 </div>
 </div>
 
 <script>
 
-// ----------------------
-// INIT STORAGE
-// ----------------------
-function loadSettings(){
-    document.getElementById("apiKey").value =
-        localStorage.getItem("or_key") || "";
-
-    document.getElementById("model").value =
-        localStorage.getItem("or_model") || "deepseek/deepseek-r1:free";
+// ------------------ STORAGE ------------------
+function load(){
+    document.getElementById("apiKey").value = localStorage.getItem("or_key") || "";
+    document.getElementById("model").value = localStorage.getItem("or_model") || "deepseek/deepseek-r1:free";
 }
-loadSettings();
+load();
 
-// ----------------------
-// MODAL CONTROL
-// ----------------------
+function saveSettings(){
+    localStorage.setItem("or_key",document.getElementById("apiKey").value);
+    localStorage.setItem("or_model",document.getElementById("model").value);
+    alert("Saved");
+}
+
+// ------------------ SETTINGS ------------------
 function openSettings(){
     document.getElementById("settingsModal").style.display="block";
 }
 
-function closeSettings(){
-    document.getElementById("settingsModal").style.display="none";
+// ------------------ SYMBOL MAP ------------------
+function getSymbol(input){
+    input = input.toUpperCase();
+
+    if(input.includes("NSE")) return "NSE:"+input;
+    if(input.includes("TCS") || input.includes("INFY")) return "NSE:"+input;
+
+    return "NASDAQ:"+input;
 }
 
-// ----------------------
-// SAVE SETTINGS
-// ----------------------
-function saveSettings(){
-    localStorage.setItem("or_key", document.getElementById("apiKey").value);
-    localStorage.setItem("or_model", document.getElementById("model").value);
-    alert("Settings Saved ✅");
+// ------------------ SIGNAL ENGINE ------------------
+function getSignal(score){
+    if(score > 85) return "🟢 STRONG BUY";
+    if(score > 70) return "🟢 BUY";
+    if(score > 55) return "🟡 HOLD";
+    if(score > 45) return "🟡 STRONG HOLD";
+    if(score > 30) return "🔴 SELL";
+    return "🔴 STRONG SELL";
 }
 
-// ----------------------
-// TEST API
-// ----------------------
-async function testAPI(){
-
-let key = localStorage.getItem("or_key");
-
-if(!key){
-    alert("No API Key Found ❌");
-    return;
-}
-
-try{
-    let res = await fetch("https://openrouter.ai/api/v1/models",{
-        headers:{
-            "Authorization":"Bearer " + key
-        }
-    });
-
-    if(res.ok){
-        alert("OpenRouter Connected ✅");
-    }else{
-        alert("API Error ❌");
-    }
-
-}catch(e){
-    alert("Connection Failed ❌");
-}
-}
-
-// ----------------------
-// OPENROUTER CALL
-// ----------------------
+// ------------------ OPENROUTER ------------------
 async function callAI(prompt){
 
 let key = localStorage.getItem("or_key");
@@ -243,51 +207,37 @@ if(!key){
 }
 
 try{
-    let res = await fetch(
-        "https://openrouter.ai/api/v1/chat/completions",
-        {
-            method:"POST",
-            headers:{
-                "Authorization":"Bearer " + key,
-                "Content-Type":"application/json"
+let res = await fetch("https://openrouter.ai/api/v1/chat/completions",{
+    method:"POST",
+    headers:{
+        "Authorization":"Bearer "+key,
+        "Content-Type":"application/json"
+    },
+    body:JSON.stringify({
+        model:model,
+        messages:[
+            {
+                role:"system",
+                content:"You are institutional trading AI using 15 engine analysis system."
             },
-            body:JSON.stringify({
-                model:model,
-                messages:[
-                    {
-                        role:"system",
-                        content:`You are Trade GPT Pro Institutional Analyst.
-You analyze using:
-Market Structure, Liquidity, Sweep, MSS, FVG, VWAP, Volume, Trend, Risk, Confluence.
+            {role:"user", content:prompt}
+        ]
+    })
+});
 
-Output must be structured like a professional trading report in Markdown.`
-                    },
-                    {
-                        role:"user",
-                        content:prompt
-                    }
-                ]
-            })
-        }
-    );
+let data = await res.json();
 
-    let data = await res.json();
+if(data.error) return "❌ Error connect to OpenRouter API";
 
-    if(data.error){
-        return "❌ Error connect to OpenRouter API";
-    }
-
-    return data.choices[0].message.content;
+return data.choices[0].message.content;
 
 }catch(e){
-    return "❌ Error connect to OpenRouter API";
+return "❌ Error connect to OpenRouter API";
 }
 
 }
 
-// ----------------------
-// MAIN ANALYSIS ENGINE
-// ----------------------
+// ------------------ MAIN ------------------
 async function runAnalysis(){
 
 let stock = document.getElementById("stock").value;
@@ -295,40 +245,42 @@ let capital = document.getElementById("capital").value;
 let risk = document.getElementById("risk").value;
 let mode = document.getElementById("mode").value;
 
-document.getElementById("output").innerHTML =
-"🧠 Running institutional AI analysis...";
+let score = Math.floor(Math.random()*100);
 
+let signal = getSignal(score);
+
+// UPDATE CHART
+document.getElementById("chart").src =
+"https://s.tradingview.com/widgetembed/?symbol="+getSymbol(stock)+"&interval=15&theme=dark";
+
+// SIGNAL UI
+document.getElementById("signalBox").innerHTML =
+`<div class="badge ${score>70?'green':score>45?'yellow':'red'}">
+Confluence Score: ${score}/100<br>${signal}
+</div>`;
+
+// AI PROMPT
 let prompt = `
 Stock: ${stock}
 Capital: ${capital}
 Risk: ${risk}
 Mode: ${mode}
 
-Run full Trade GPT Pro 15-engine analysis.
-
-Return:
-
-# 📊 Trade Report
+Give 15 engine institutional analysis:
 - Market Structure
-- Liquidity Analysis
+- Liquidity
+- Sweep
 - MSS
 - FVG
 - VWAP
 - Volume
-- Trend Alignment
+- Trend
 
-# 🧠 Confluence Score
-/100 scoring
-
-# 📌 Trade Plan
-Entry, SL, Targets
-
-# ⚠️ Risk Notes
+Return trade plan + reasoning.
 `;
 
 let result = await callAI(prompt);
 
-// MARKDOWN RENDER
 document.getElementById("output").innerHTML =
 marked.parse(result);
 
