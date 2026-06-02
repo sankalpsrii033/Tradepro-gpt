@@ -2,237 +2,245 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Trade GPT Pro - Level 3 AI Terminal</title>
+<title>Trade GPT Pro - Level 4 AI Terminal</title>
+
+<!-- MARKED JS (Markdown Renderer) -->
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
 <style>
-body{
-    margin:0;
-    font-family:Arial;
-    background:#070b14;
-    color:white;
+body {
+    margin: 0;
+    font-family: Arial;
+    background: #070b14;
+    color: white;
 }
 
-header{
-    background:#111827;
-    padding:18px;
-    text-align:center;
-    font-size:22px;
-    font-weight:bold;
+/* HEADER */
+header {
+    background: #111827;
+    padding: 16px;
+    text-align: center;
+    font-size: 20px;
+    font-weight: bold;
 }
 
-.grid{
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:15px;
-    padding:15px;
+/* CHAT AREA */
+#chat {
+    height: 70vh;
+    overflow-y: auto;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
 }
 
-.card{
-    background:#111827;
-    padding:15px;
-    border-radius:12px;
+.msg {
+    padding: 12px;
+    border-radius: 10px;
+    max-width: 80%;
+    line-height: 1.4;
 }
 
-input,select,button{
-    width:100%;
-    padding:10px;
-    margin-top:8px;
-    border:none;
-    border-radius:6px;
+.user {
+    background: #2563eb;
+    align-self: flex-end;
 }
 
-button{
-    background:#22c55e;
-    font-weight:bold;
-    cursor:pointer;
+.ai {
+    background: #111827;
+    align-self: flex-start;
 }
 
-button:hover{background:#16a34a;}
-
-.output{
-    background:black;
-    padding:15px;
-    height:420px;
-    overflow:auto;
-    white-space:pre-line;
-    border-radius:10px;
+/* INPUT BAR */
+#inputBar {
+    display: flex;
+    padding: 10px;
+    gap: 10px;
+    background: #111827;
 }
 
-.engine{
-    font-size:12px;
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:5px;
+input {
+    flex: 1;
+    padding: 12px;
+    border-radius: 8px;
+    border: none;
 }
 
-.red{color:#ef4444;}
-.green{color:#22c55e;}
-.yellow{color:#facc15;}
+button {
+    padding: 12px 16px;
+    border: none;
+    border-radius: 8px;
+    background: #22c55e;
+    font-weight: bold;
+    cursor: pointer;
+}
 
-iframe{
-    width:100%;
-    height:400px;
-    border-radius:10px;
-    border:none;
+/* SETTINGS BUTTON */
+#settingsBtn {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    background: #f59e0b;
+    color: black;
+}
+
+/* MODAL */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.7);
+}
+
+.modal-content {
+    background: #111827;
+    width: 400px;
+    margin: 10% auto;
+    padding: 20px;
+    border-radius: 12px;
+}
+
+.modal input, .modal select {
+    width: 100%;
+    padding: 10px;
+    margin-top: 10px;
+    border-radius: 6px;
+    border: none;
+}
+
+.close {
+    float: right;
+    cursor: pointer;
+    color: red;
 }
 </style>
 </head>
 
 <body>
 
-<header>🔥 TRADE GPT PRO - LEVEL 3 OPENROUTER TERMINAL</header>
+<header>🔥 Trade GPT Pro - Level 4 AI Terminal</header>
 
-<div class="grid">
+<button id="settingsBtn" onclick="openSettings()">⚙ Settings</button>
+
+<!-- CHAT -->
+<div id="chat"></div>
 
 <!-- INPUT -->
-<div class="card">
-<h3>📌 Trade Input</h3>
+<div id="inputBar">
+<input id="userInput" placeholder="Ask Trade GPT Pro AI..." />
+<button onclick="sendMessage()">Send</button>
+</div>
 
-<input id="stock" placeholder="Stock (e.g. NVDA)">
-<input id="capital" placeholder="Capital (₹)">
-<input id="risk" placeholder="Risk %">
+<!-- SETTINGS MODAL -->
+<div class="modal" id="settingsModal">
+<div class="modal-content">
+<span class="close" onclick="closeSettings()">✖</span>
 
-<select id="mode">
-<option value="A++">A++ Institutional Deep AI</option>
-<option value="A+">A+ Balanced AI</option>
-<option value="B">B Quick Scan</option>
-</select>
+<h3>⚙ Settings</h3>
 
-<hr>
+<input id="apiKey" type="password" placeholder="OpenRouter API Key">
 
-<h3>🔌 OPENROUTER API PANEL</h3>
-
-<input id="apiKey" placeholder="Enter OpenRouter API Key">
 <select id="model">
+<option value="deepseek/deepseek-r1:free">DeepSeek R1 (Free Default)</option>
 <option value="openai/gpt-4o-mini">GPT-4o Mini</option>
 <option value="anthropic/claude-3-haiku">Claude 3 Haiku</option>
 <option value="meta-llama/llama-3.1-8b-instruct">Llama 3.1</option>
 </select>
 
-<button onclick="testConnection()">TEST API CONNECTION</button>
-
+<button onclick="saveSettings()">Save Settings</button>
 </div>
-
-<!-- ENGINE -->
-<div class="card">
-<h3>🧠 15 ENGINE SYSTEM</h3>
-
-<div class="engine">
-<label>✔ Data Engine</label>
-<label>✔ Market Structure</label>
-<label>✔ Liquidity Engine</label>
-<label>✔ Sweep Engine</label>
-<label>✔ MSS Engine</label>
-<label>✔ FVG Engine</label>
-<label>✔ VWAP Engine</label>
-<label>✔ Volume Engine</label>
-<label>✔ Trend Engine</label>
-<label>✔ News Engine</label>
-<label>✔ Risk Engine</label>
-<label>✔ Confluence Engine</label>
-<label>✔ AI Debate Engine</label>
-<label>✔ Execution Engine</label>
-<label>✔ Report Engine</label>
-</div>
-</div>
-
-<!-- OUTPUT -->
-<div class="card" style="grid-column:span 2;">
-<h3>📊 AI REPORT OUTPUT</h3>
-<div class="output" id="output">Waiting for analysis...</div>
-<button onclick="runAnalysis()">RUN FULL AI ANALYSIS</button>
-</div>
-
-<!-- CHART -->
-<div class="card" style="grid-column:span 2;">
-<h3>📈 LIVE CHART</h3>
-<iframe src="https://s.tradingview.com/widgetembed/?symbol=NASDAQ:AAPL&interval=15&theme=dark"></iframe>
-</div>
-
 </div>
 
 <script>
 
-// ----------------------
-// RANDOM ENGINE (backup)
-// ----------------------
-function r(min,max){
-    return Math.floor(Math.random()*(max-min+1))+min;
+// --------------------
+// INIT STORAGE
+// --------------------
+let chatHistory = JSON.parse(localStorage.getItem("chat_history") || "[]");
+
+document.getElementById("apiKey").value = localStorage.getItem("api_key") || "";
+document.getElementById("model").value = localStorage.getItem("model") || "deepseek/deepseek-r1:free";
+
+// Load old chat
+window.onload = () => {
+    chatHistory.forEach(m => renderMessage(m.role, m.content));
+};
+
+// --------------------
+// SETTINGS
+// --------------------
+function openSettings(){
+    document.getElementById("settingsModal").style.display = "block";
 }
 
-// ----------------------
-// API TEST
-// ----------------------
-async function testConnection(){
-    const key = document.getElementById("apiKey").value;
+function closeSettings(){
+    document.getElementById("settingsModal").style.display = "none";
+}
 
-    if(!key){
-        document.getElementById("output").innerText =
-        "❌ Error: connect to OpenRouter API";
-        return;
+function saveSettings(){
+    localStorage.setItem("api_key", document.getElementById("apiKey").value);
+    localStorage.setItem("model", document.getElementById("model").value);
+    closeSettings();
+}
+
+// --------------------
+// RENDER MESSAGE
+// --------------------
+function renderMessage(role, content){
+    let div = document.createElement("div");
+    div.classList.add("msg");
+    div.classList.add(role === "user" ? "user" : "ai");
+
+    if(role === "ai"){
+        div.innerHTML = marked.parse(content);
+    } else {
+        div.innerText = content;
     }
 
-    document.getElementById("output").innerText =
-    "🔌 Testing connection to OpenRouter...";
-
-    try{
-        let res = await fetch("https://openrouter.ai/api/v1/models", {
-            headers:{
-                "Authorization":"Bearer " + key
-            }
-        });
-
-        if(res.ok){
-            document.getElementById("output").innerText =
-            "✅ OpenRouter API Connected Successfully";
-        }else{
-            document.getElementById("output").innerText =
-            "❌ Error: connect to OpenRouter API";
-        }
-    }catch(e){
-        document.getElementById("output").innerText =
-        "❌ Error: connect to OpenRouter API";
-    }
+    document.getElementById("chat").appendChild(div);
+    document.getElementById("chat").scrollTop = 999999;
 }
 
-// ----------------------
-// SAVE HISTORY
-// ----------------------
-function saveHistory(data){
-    let h = JSON.parse(localStorage.getItem("tg_history")||"[]");
-    h.push({time:new Date(), data});
-    localStorage.setItem("tg_history", JSON.stringify(h));
+// --------------------
+// SAVE CHAT
+// --------------------
+function saveChat(role, content){
+    chatHistory.push({role, content});
+    localStorage.setItem("chat_history", JSON.stringify(chatHistory));
 }
 
-// ----------------------
-// OPENROUTER AI CALL
-// ----------------------
-async function callAI(prompt){
+// --------------------
+// OPENROUTER CALL
+// --------------------
+async function callAI(message){
 
-    const key = document.getElementById("apiKey").value;
-    const model = document.getElementById("model").value;
+    const key = localStorage.getItem("api_key");
+    const model = localStorage.getItem("model") || "deepseek/deepseek-r1:free";
 
     if(!key){
-        return "❌ Error: connect to OpenRouter API";
+        return "❌ **Error:** connect to OpenRouter API";
     }
 
     try{
         let res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-            method:"POST",
-            headers:{
-                "Authorization":"Bearer " + key,
-                "Content-Type":"application/json"
+            method: "POST",
+            headers: {
+                "Authorization": "Bearer " + key,
+                "Content-Type": "application/json"
             },
-            body:JSON.stringify({
-                model:model,
-                messages:[
+            body: JSON.stringify({
+                model: model,
+                messages: [
                     {
-                        role:"system",
-                        content:"You are Trade GPT Pro AI. You analyze markets using structure, liquidity, MSS, FVG, VWAP, volume, risk and confluence scoring. Always respond in structured trading report format."
+                        role: "system",
+                        content: "You are Trade GPT Pro AI. You analyze markets using structure, liquidity, MSS, FVG, VWAP, volume and risk. Always respond in structured markdown format."
                     },
                     {
-                        role:"user",
-                        content:prompt
+                        role: "user",
+                        content: message
                     }
                 ]
             })
@@ -241,61 +249,40 @@ async function callAI(prompt){
         let data = await res.json();
 
         if(data.error){
-            return "❌ Error: connect to OpenRouter API";
+            return "❌ **Error:** connect to OpenRouter API";
         }
 
         return data.choices[0].message.content;
 
-    }catch(e){
-        return "❌ Error: connect to OpenRouter API";
+    } catch (e) {
+        return "❌ **Error:** connect to OpenRouter API";
     }
 }
 
-// ----------------------
-// MAIN ENGINE
-// ----------------------
-async function runAnalysis(){
+// --------------------
+// SEND MESSAGE
+// --------------------
+async function sendMessage(){
 
-let stock = document.getElementById("stock").value;
-let capital = document.getElementById("capital").value;
-let risk = document.getElementById("risk").value;
-let mode = document.getElementById("mode").value;
+    let input = document.getElementById("userInput");
+    let text = input.value;
 
-document.getElementById("output").innerText =
-"🧠 Running AI analysis...";
+    if(!text) return;
 
-let prompt = `
-Analyze stock: ${stock}
+    renderMessage("user", text);
+    saveChat("user", text);
 
-Capital: ₹${capital}
-Risk: ${risk}
-Mode: ${mode}
+    input.value = "";
 
-Use Trade GPT Pro 15 engine system:
-- Market Structure
-- Liquidity
-- Sweep
-- MSS
-- FVG
-- VWAP
-- Volume
-- Trend Alignment
-- Risk Management
+    renderMessage("ai", "_Thinking..._");
 
-Give:
-1. Confluence Score /100
-2. A+/A++/B classification
-3. Entry, SL, Targets
-4. Institutional explanation
-5. Risk notes
-`;
+    let response = await callAI(text);
 
-let result = await callAI(prompt);
+    // remove last "thinking"
+    document.getElementById("chat").lastChild.remove();
 
-document.getElementById("output").innerText = result;
-
-saveHistory(result);
-
+    renderMessage("ai", response);
+    saveChat("ai", response);
 }
 
 </script>
