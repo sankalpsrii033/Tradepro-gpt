@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Trade GPT Pro — Terminal UI v4.1</title>
 
-<!-- Marked.js for rendering markdown output -->
+<!-- Marked.js CDN (With fallback built into JS if this fails to load) -->
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
 <style>
@@ -174,6 +174,7 @@ input:focus, select:focus {
 
 .output-display p {
     margin-top: 0;
+    margin-bottom: 8px;
 }
 
 /* Chat Panel */
@@ -260,9 +261,9 @@ iframe {
 /* Modal Styling */
 .modal {
     display: none;
-    position:fixed;
-    top:0; left:0;
-    width:100%; height:100%;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
     background: rgba(0,0,0,0.85);
     z-index: 1000;
     align-items: center;
@@ -278,10 +279,22 @@ iframe {
     overflow: hidden;
 }
 
+.badge-demo {
+    background: var(--accent-yellow);
+    color: black;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: bold;
+    display: inline-block;
+    margin-bottom: 10px;
+}
+
 /* General Utilities */
 .text-green { color: var(--accent-green); }
 .text-red { color: var(--accent-red); }
 .text-yellow { color: var(--accent-yellow); }
+.text-blue { color: var(--accent-blue); }
 .text-muted { color: var(--text-muted); }
 .text-center { text-align: center; }
 
@@ -298,14 +311,14 @@ iframe {
 
 <div class="container">
     
-    <!-- TOP WORKSPACE: 3 COLUMNS -->
+    <!-- TOP WORKSPACE -->
     <div class="top-section">
         
         <!-- COLUMN 1: INPUT SYSTEM -->
         <div class="card">
             <div class="card-header">
                 <span>📊 SYSTEM INPUTS</span>
-                <span class="text-muted" id="feedStatus">Local Feed</span>
+                <span id="feedStatus" class="text-yellow">Local Feed</span>
             </div>
             <div class="card-body">
                 <div class="form-group">
@@ -332,7 +345,7 @@ iframe {
                     </select>
                 </div>
                 
-                <button class="btn-run" onclick="executePipeline()">RUN 15-ENGINE PIPELINE</button>
+                <button class="btn-run" id="btnRun" onclick="executePipeline()">RUN 15-ENGINE PIPELINE</button>
             </div>
         </div>
         
@@ -344,9 +357,9 @@ iframe {
             </div>
             <div class="card-body" style="background: #070b14;">
                 <div class="output-display" id="reportOutput">
-<span class="text-muted">// System idle.
-// Configure your API connections in settings.
-// Enter parameters and run the analysis to execute the pipeline.</span>
+<span class="text-muted">// System standing by.
+// You can run the analysis immediately!
+// (Runs in Sandbox Demo mode if API keys are not connected yet)</span>
                 </div>
             </div>
         </div>
@@ -355,7 +368,7 @@ iframe {
         <div class="card">
             <div class="card-header">
                 <span>💬 SYSTEM HELP ASSISTANT</span>
-                <span class="text-blue" style="color:var(--accent-blue)">AI Active</span>
+                <span class="text-blue">Active</span>
             </div>
             <div class="card-body">
                 <div class="chat-container">
@@ -381,8 +394,7 @@ iframe {
             <span id="chartSymbol" class="text-muted">NASDAQ:AAPL</span>
         </div>
         <div class="chart-frame-container" id="chartContainer">
-            <!-- Default AAPL Chart -->
-            <iframe src="https://s.tradingview.com/widgetembed/?symbol=NASDAQ:AAPL&interval=15&theme=dark"></iframe>
+            <iframe id="tvIframe" src="https://s.tradingview.com/widgetembed/?symbol=NASDAQ:AAPL&interval=15&theme=dark"></iframe>
         </div>
     </div>
 
@@ -427,19 +439,27 @@ const defaultSettings = {
     finnhubKey: ""
 };
 
-// Retrieve values from local storage
+// Retrieve values from local storage safely
 function loadSettings() {
-    document.getElementById("orKey").value = localStorage.getItem("or_key") || defaultSettings.orKey;
-    document.getElementById("orModel").value = localStorage.getItem("or_model") || defaultSettings.orModel;
-    document.getElementById("finnhubKey").value = localStorage.getItem("finnhub_key") || defaultSettings.finnhubKey;
+    try {
+        document.getElementById("orKey").value = localStorage.getItem("or_key") || defaultSettings.orKey;
+        document.getElementById("orModel").value = localStorage.getItem("or_model") || defaultSettings.orModel;
+        document.getElementById("finnhubKey").value = localStorage.getItem("finnhub_key") || defaultSettings.finnhubKey;
+    } catch (e) {
+        console.warn("Could not load from localStorage:", e);
+    }
     updateFeedBadge();
 }
 
 function saveSettings() {
-    localStorage.setItem("or_key", document.getElementById("orKey").value.trim());
-    localStorage.setItem("or_model", document.getElementById("orModel").value.trim());
-    localStorage.setItem("finnhub_key", document.getElementById("finnhubKey").value.trim());
-    alert("Connection settings written successfully.");
+    try {
+        localStorage.setItem("or_key", document.getElementById("orKey").value.trim());
+        localStorage.setItem("or_model", document.getElementById("orModel").value.trim());
+        localStorage.setItem("finnhub_key", document.getElementById("finnhubKey").value.trim());
+        alert("Connection settings saved successfully.");
+    } catch (e) {
+        alert("Unable to save to localStorage: " + e.message);
+    }
     updateFeedBadge();
     closeModal();
 }
@@ -447,7 +467,7 @@ function saveSettings() {
 function updateFeedBadge() {
     const fhKey = localStorage.getItem("finnhub_key");
     const statusText = document.getElementById("feedStatus");
-    if (fhKey) {
+    if (fhKey && fhKey.trim() !== "") {
         statusText.innerText = "Finnhub Live";
         statusText.className = "text-green";
     } else {
@@ -456,7 +476,6 @@ function updateFeedBadge() {
     }
 }
 
-// Modal management
 function openModal() {
     document.getElementById("settingsModal").style.display = "flex";
 }
@@ -465,22 +484,49 @@ function closeModal() {
 }
 
 // ==========================================
-// 2. DATA FEEDS & PIPELINE FLOW
+// 2. DEFENSIVE MARKDOWN PARSING ENGINE
+// ==========================================
+function parseMarkdownSafely(text) {
+    // 1. Check if external marked library loaded successfully
+    try {
+        if (typeof marked !== 'undefined' && typeof marked.parse === 'function') {
+            return marked.parse(text);
+        } else if (typeof marked === 'function') {
+            return marked(text);
+        }
+    } catch (e) {
+        console.warn("External parser failed, using native system fallback:", e);
+    }
+
+    // 2. High-fidelity native terminal markdown fallback
+    let html = text;
+    // Replace Header lines (e.g. ════)
+    html = html.replace(/═══+/g, '<hr style="border: none; border-top: 1px dashed var(--border-color); margin: 10px 0;">');
+    // Strong tags (**text**)
+    html = html.replace(/\*\*(.*?)\*\*/g, '<strong style="color:var(--accent-blue)">$1</strong>');
+    // Bullets (- item)
+    html = html.replace(/^\s*-\s*(.*?)$/gm, '<div style="margin-left: 10px; color:#e2e8f0;">• $1</div>');
+    // Line breaks
+    html = html.replace(/\n/g, '<br>');
+
+    return html;
+}
+
+// ==========================================
+// 3. ANALYSIS PIPELINE & SIMULATOR ENGINE
 // ==========================================
 
-// Helper function to resolve symbol exchange maps
 function getTradingViewSymbol(symbol) {
     symbol = symbol.trim().toUpperCase();
-    if (symbol.includes("TCS") || symbol.includes("INFY") || symbol.includes("RELIANCE")) {
+    if (symbol === "TCS" || symbol === "INFY" || symbol === "RELIANCE") {
         return "NSE:" + symbol;
     }
     return "NASDAQ:" + symbol;
 }
 
-// Fetch price from Finnhub Engine
 async function fetchFinnhubPrice(symbol) {
     const key = localStorage.getItem("finnhub_key");
-    if (!key) return null;
+    if (!key || key.trim() === "") return null;
     
     try {
         const cleanedSymbol = symbol.trim().toUpperCase();
@@ -497,18 +543,80 @@ async function fetchFinnhubPrice(symbol) {
             };
         }
     } catch (e) {
-        console.error("Finnhub integration pipeline error:", e);
+        console.error("Finnhub fetching error:", e);
     }
     return null;
 }
 
-// Execute core OpenRouter prompt API
+// Generate an immediate high-fidelity mock response if API keys are missing
+function generateMockReport(stock, capital, risk, mode, priceObj) {
+    const basePrice = priceObj ? priceObj.currentPrice : 154.20;
+    const isBullish = stock.length % 2 === 0; // Deterministic calculation based on symbol
+    const grade = isBullish ? "A+" : "B";
+    const verdict = isBullish ? "BUY" : "NO TRADE";
+    const entryMin = (basePrice * 0.99).toFixed(2);
+    const entryMax = (basePrice * 1.005).toFixed(2);
+    const sl = (basePrice * 0.97).toFixed(2);
+    const t1 = (basePrice * 1.04).toFixed(2);
+    const t2 = (basePrice * 1.08).toFixed(2);
+    const t3 = (basePrice * 1.12).toFixed(2);
+    const score = isBullish ? "8.8" : "5.4";
+    const riskLvl = risk > 2 ? "HIGH" : "LOW";
+
+    const summaryList = isBullish ? `
+- Liquidity Sweep confirmed on daily range lows.
+- Bullish Market Structure Shift (MSS) verified on 15m timeframes.
+- Institutional price holding strong structural support above VWAP line.
+- Volumetric expansion confirmed above standard 20MA index.
+- FVG alignment supports clean mitigation zone for entry.
+` : `
+- Structure exhibits persistent Lower Lows; no dynamic reversal confirmation.
+- Missing liquid sweep of key high-timeframe order block levels.
+- VWAP indicator acts as active overhead ceiling resistance.
+- Volume profile is standard; lacks momentum buy confirmation.
+- Confluence score did not meet strict ${mode} parameters. No Trade model triggered.
+`;
+
+    return `
+<span class="badge-demo">DEMO MODE SIMULATION ACTIVE</span>
+══════════════════════════════
+TRADE GPT PRO REPORT CARD
+══════════════════════════════
+**STOCK:** ${stock}
+**MODE:** ${mode} DEEP SCAN
+
+**GRADE:** ${grade}
+
+**VERDICT:** ${verdict}
+
+**ENTRY ZONE:**
+$${entryMin} - $${entryMax}
+
+**STOP LOSS:**
+$${sl}
+
+**TARGETS:**
+T1: $${t1}
+T2: $${t2}
+T3: $${t3}
+
+**CONFLUENCE SCORE:**
+${score} / 10
+
+**RISK LEVEL:**
+${riskLvl}
+
+**REASON SUMMARY:**
+${summaryList}
+`;
+}
+
 async function callOpenRouter(promptText, systemInstructions) {
     const key = localStorage.getItem("or_key");
     const model = localStorage.getItem("or_model") || "deepseek/deepseek-r1:free";
     
-    if (!key) {
-        return "❌ CONNECTION ERROR: OpenRouter API key missing. Enter your key in the 'Setup API Engine' panel.";
+    if (!key || key.trim() === "") {
+        return null; // Return null so pipeline triggers demo generator gracefully
     }
 
     try {
@@ -528,146 +636,55 @@ async function callOpenRouter(promptText, systemInstructions) {
         });
 
         if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}));
-            const errorMessage = errorData?.error?.message || `HTTP code ${response.status}`;
-            return `❌ CONNECTION ERROR: OpenRouter API rejected request (${errorMessage})`;
+            const errData = await response.json().catch(() => ({}));
+            const errMsg = errData?.error?.message || `HTTP Status ${response.status}`;
+            throw new Error(errMsg);
         }
 
         const data = await response.json();
-        return data.choices[0].message.content;
+        if (data && data.choices && data.choices[0]) {
+            return data.choices[0].message.content;
+        }
+        throw new Error("Invalid API payload returned.");
     } catch (e) {
-        return `❌ NETWORK EXCEPTION: Failed to resolve core API pipeline (${e.message})`;
+        return `❌ API ERROR: ${e.message}\n\n(Please check your OpenRouter API key and internet connection in Settings)`;
     }
 }
 
-// Run Pipeline Coordinator
 async function executePipeline() {
-    const stock = document.getElementById("stock").value.trim().toUpperCase();
-    const capital = document.getElementById("capital").value;
-    const risk = document.getElementById("risk").value;
-    const mode = document.getElementById("mode").value;
+    const btn = document.getElementById("btnRun");
     const outputDiv = document.getElementById("reportOutput");
     const engineStatus = document.getElementById("engineStatus");
-
-    if (!stock) {
-        alert("Please enter a valid stock ticker symbol.");
+    
+    // Safely collect variables
+    const stockEl = document.getElementById("stock");
+    const capitalEl = document.getElementById("capital");
+    const riskEl = document.getElementById("risk");
+    const modeEl = document.getElementById("mode");
+    
+    if (!stockEl || !capitalEl || !riskEl || !modeEl) {
+        alert("Crucial DOM inputs are missing. Please reload the index file.");
         return;
     }
 
+    const stock = stockEl.value.trim().toUpperCase();
+    const capital = capitalEl.value;
+    const risk = riskEl.value;
+    const mode = modeEl.value;
+
+    if (!stock) {
+        alert("Please enter a stock symbol first.");
+        return;
+    }
+
+    // Disable running twice at same time
+    btn.disabled = true;
+    btn.innerText = "PROCESSING...";
     engineStatus.innerText = "RUNNING";
     engineStatus.className = "text-yellow";
 
-    // Update TradingView Chart immediately
-    const tvSymbol = getTradingViewSymbol(stock);
-    document.getElementById("chartSymbol").innerText = tvSymbol;
-    document.getElementById("chartContainer").innerHTML = `<iframe src="https://s.tradingview.com/widgetembed/?symbol=${tvSymbol}&interval=15&theme=dark"></iframe>`;
-
-    // Visual sequence execution representing 15 separate system engines
-    const engines = [
-        "Data Ingestion Engine", "Market Structure Engine", "Liquidity Profiler", 
-        "Stop Hunt/Sweep Detection", "MSS Breakout Evaluation", "FVG Mapping", 
-        "VWAP Correlation Tracker", "Volume Expansion Engine", "News Sentiment Engine", 
-        "Sector Strength Matrix", "Options Flow Metric", "Risk & Capital Preservation Sizer", 
-        "Confluence Alignment Calculator", "AI Biased Debate Solver", "Institutional Report Card Printer"
-    ];
-
-    for (let i = 0; i < engines.length; i++) {
-        outputDiv.innerHTML = `<span class="text-yellow">[Engine ${i+1}/15] Active: ${engines[i]}...</span>`;
-        await new Promise(r => setTimeout(r, 120)); // brief visual pause to sequence engine pipelines
-    }
-
-    outputDiv.innerHTML = `<span class="text-blue">Synchronizing with OpenRouter LLM framework...</span>`;
-
-    // Fetch Market feeds
-    let marketDetails = "Using simulated institutional historical pricing feeds.";
-    const priceData = await fetchFinnhubPrice(stock);
-    
-    if (priceData) {
-        marketDetails = `Real-time Finnhub Quote Data:
-- Current: $${priceData.currentPrice}
-- Today's Range: $${priceData.low} - $${priceData.high}
-- Open: $${priceData.open}
-- Previous Close: $${priceData.prevClose}`;
-    }
-
-    const systemInstructions = "You are the primary engine of Trade GPT Pro. Your directive is to evaluate the provided asset using a consolidated 15-engine system (Market Structure, Liquidity Sweeps, MSS, FVG, VWAP convergence, Volumetric data, Sector Correlation, Options alignment, and strict risk assessment principles). Output ONLY a high-performance markdown Report Card using the exact template specifications. Do not include raw output, raw logs, or conversational system text.";
-
-    const promptText = `
-Asset Target: ${stock}
-Trade Capital Size: $${capital}
-Maximum Risk Parameter: ${risk}%
-Selected Scanning Protocol: ${mode}
-
-Market Metrics:
-${marketDetails}
-
-Generate the exact Trade GPT Pro Report Card matching this exact markdown schema:
-
-══════════════════════════════
-TRADE GPT PRO REPORT CARD
-══════════════════════════════
-**STOCK:** [Resolved stock ticker]
-**MODE:** [Assessed mode]
-
-**GRADE:** [A+ / A / B / C / F]
-
-**VERDICT:** [BUY / SELL / HOLD / NO TRADE]
-
-**ENTRY ZONE:**
-$[Price Range]
-
-**STOP LOSS:**
-$[Price]
-
-**TARGETS:**
-T1: $[Price]
-T2: $[Price]
-T3: $[Price]
-
-**CONFLUENCE SCORE:**
-[X.X] / 10
-
-**RISK LEVEL:**
-[LOW / MEDIUM / HIGH]
-
-**REASON SUMMARY:**
-- [Reason 1 based on structure/sweep]
-- [Reason 2 based on MSS/FVG/VWAP]
-- [Reason 3 based on Volume/Options]
-- [Reason 4 based on Sector/Fundamental metrics]
-- [Reason 5 based on Risk Engine limitations]
-`;
-
-    const reportCard = await callOpenRouter(promptText, systemInstructions);
-    
-    // Render report card to terminal console
-    outputDiv.innerHTML = marked.parse(reportCard);
-    
-    engineStatus.innerText = "IDLE";
-    engineStatus.className = "text-green";
-}
-
-// ==========================================
-// 3. HELP ME SUPPORT CHAT ASSISTANT
-// ==========================================
-
-async function sendChatMessage() {
-    const inputEl = document.getElementById("chatInput");
-    const chatHistory = document.getElementById("chatHistory");
-    const text = inputEl.value.trim();
-    if (!text) return;
-
-    // Render User Message
-    const userBubble = document.createElement("div");
-    userBubble.className = "chat-bubble user";
-    userBubble.innerText = text;
-    chatHistory.appendChild(userBubble);
-    
-    inputEl.value = "";
-    chatHistory.scrollTop = chatHistory.scrollHeight;
-
-    // Render Loading State
-    const botBubble = document.createElement("div");
-    botBubble.className = "chat-bubble assistant";
-    botBubble.innerText = "...";
-    chatHistory.appendChild(botBubbl
+    try {
+        // Update TradingView Chart Frame
+        const tvSymbol = getTradingViewSymbol(stock);
+        document.getElementById("chartSymbol").innerText = tvSymbol;
+        do
