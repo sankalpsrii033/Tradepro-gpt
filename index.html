@@ -1,331 +1,340 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TradePRO GPT // Institutional Trading Terminal</title>
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- FontAwesome Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Marked.js for Markdown Rendering -->
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <!-- jsPDF for PDF Generation -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        terminalDark: '#080c14',
-                        terminalPanel: '#111622',
-                        terminalBorder: '#1f293d',
-                        terminalGreen: '#10b981',
-                        terminalRed: '#ef4444',
-                        terminalGold: '#f59e0b',
-                        terminalBlue: '#3b82f6',
-                        terminalText: '#9ca3af',
-                    },
-                    fontFamily: {
-                        mono: ['JetBrains Mono', 'Fira Code', 'Courier New', 'monospace'],
-                    }
-                }
-            }
-        }
-    </script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&display=swap');
-        body {
-            font-family: 'JetBrains Mono', monospace;
-            background-color: #080c14;
-            color: #e5e7eb;
-        }
-        /* Custom scrollbars */
-        ::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #080c14;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #1f293d;
-            border-radius: 3px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #3b82f6;
-        }
-        /* Price flicker animation classes */
-        .flash-green {
-            animation: flashGreenAnim 0.4s ease-out;
-        }
-        .flash-red {
-            animation: flashRedAnim 0.4s ease-out;
-        }
-        @keyframes flashGreenAnim {
-            0% { background-color: rgba(16, 185, 129, 0.25); }
-            100% { background-color: transparent; }
-        }
-        @keyframes flashRedAnim {
-            0% { background-color: rgba(239, 68, 68, 0.25); }
-            100% { background-color: transparent; }
-        }
-    </style>
+<meta charset="UTF-8">
+<title>Trade GPT Pro - Level 4 Terminal</title>
+
+<!-- Markdown Renderer -->
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+<style>
+body{
+    margin:0;
+    font-family:Arial;
+    background:#070b14;
+    color:white;
+}
+
+header{
+    background:#111827;
+    padding:16px;
+    text-align:center;
+    font-size:20px;
+    font-weight:bold;
+}
+
+.container{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:15px;
+    padding:15px;
+}
+
+.card{
+    background:#111827;
+    padding:15px;
+    border-radius:12px;
+}
+
+input,select,button{
+    width:100%;
+    padding:10px;
+    margin-top:8px;
+    border:none;
+    border-radius:6px;
+}
+
+button{
+    background:#22c55e;
+    font-weight:bold;
+    cursor:pointer;
+}
+
+button:hover{background:#16a34a;}
+
+.output{
+    background:black;
+    padding:15px;
+    height:420px;
+    overflow:auto;
+    border-radius:10px;
+}
+
+iframe{
+    width:100%;
+    height:380px;
+    border:none;
+    border-radius:10px;
+}
+
+/* SETTINGS MODAL */
+.modal{
+    display:none;
+    position:fixed;
+    top:0;left:0;
+    width:100%;
+    height:100%;
+    background:rgba(0,0,0,0.8);
+}
+
+.modal-content{
+    background:#111827;
+    width:400px;
+    margin:10% auto;
+    padding:20px;
+    border-radius:10px;
+}
+
+.close{
+    float:right;
+    cursor:pointer;
+    color:red;
+    font-size:18px;
+}
+</style>
 </head>
-<body class="h-screen flex flex-col overflow-hidden text-xs">
 
-    <!-- TOP HEADER / TICKER BAR -->
-    <header class="h-12 border-b border-terminalBorder bg-terminalPanel flex items-center justify-between px-4 z-10 shrink-0">
-        <div class="flex items-center space-x-3">
-            <span class="text-terminalRed text-lg font-bold tracking-widest flex items-center gap-1.5">
-                <i class="fa-solid fa-skull"></i> TradePRO <span class="text-white text-xs bg-terminalRed px-1 py-0.5 rounded font-mono font-normal">GPT v4.0</span>
-            </span>
-            <div class="h-4 w-[1px] bg-terminalBorder"></div>
-            <div class="flex items-center space-x-2">
-                <span class="inline-block w-2.5 h-2.5 rounded-full bg-terminalGreen animate-pulse"></span>
-                <span id="wsStatus" class="text-gray-400 font-medium">WS CONTROLLER: ONLINE</span>
-            </div>
-        </div>
+<body>
 
-        <!-- Horizontal Running Ticker Ribbon -->
-        <div class="hidden md:flex flex-1 mx-8 overflow-hidden relative h-full items-center">
-            <div id="tickerRibbon" class="flex space-x-6 whitespace-nowrap absolute animate-marquee">
-                <!-- Javascript populates live horizontal items -->
-            </div>
-        </div>
+<header>
+🔥 TRADE GPT PRO - LEVEL 4 INSTITUTIONAL TERMINAL
+<button onclick="openSettings()" style="float:right;background:#3b82f6;">Settings</button>
+</header>
 
-        <div class="flex items-center space-x-3">
-            <button onclick="openSettingsModal()" class="bg-terminalBorder hover:bg-gray-700 text-white px-3 py-1.5 rounded flex items-center space-x-1.5 transition">
-                <i class="fa-solid fa-sliders text-terminalGold"></i>
-                <span>CORE API SETTINGS</span>
-            </button>
-            <span class="text-gray-500 font-mono" id="currentTime">00:00:00 UTC</span>
-        </div>
-    </header>
+<div class="container">
 
-    <!-- MAIN COCKPIT WORKSPACE -->
-    <main class="flex-1 flex overflow-hidden p-2 gap-2">
+<!-- INPUT PANEL -->
+<div class="card">
+<h3>📊 Trade Setup Engine</h3>
 
-        <!-- COLUMN 1: LIVE SCANNER & ORDER SETUP (320px) -->
-        <section class="w-80 flex flex-col gap-2 shrink-0">
-            <!-- Asset Selector & Real-Time Scanner -->
-            <div class="flex-1 bg-terminalPanel border border-terminalBorder rounded flex flex-col overflow-hidden">
-                <div class="p-2 bg-terminalDark border-b border-terminalBorder flex justify-between items-center">
-                    <span class="font-bold text-gray-300 flex items-center gap-1">
-                        <i class="fa-solid fa-tower-broadcast text-terminalGreen"></i> LIVE MULTI-STOCK SCANNER (TOP 50)
-                    </span>
-                    <select id="marketFilter" class="bg-terminalPanel border border-terminalBorder text-white text-[10px] rounded px-1 py-0.5 focus:outline-none" onchange="filterScanner()">
-                        <option value="ALL">ALL MARKETS</option>
-                        <option value="NSE">NSE INDIA</option>
-                        <option value="NASDAQ">NASDAQ</option>
-                    </select>
-                </div>
-                <div class="overflow-y-auto flex-1">
-                    <table class="w-full text-left text-[11px]">
-                        <thead class="bg-terminalDark sticky top-0 text-gray-500 text-[10px]">
-                            <tr>
-                                <th class="p-2 border-b border-terminalBorder">TICKER</th>
-                                <th class="p-2 border-b border-terminalBorder text-right">LAST</th>
-                                <th class="p-2 border-b border-terminalBorder text-right">CHG%</th>
-                                <th class="p-2 border-b border-terminalBorder text-right">VOL</th>
-                            </tr>
-                        </thead>
-                        <tbody id="scannerTableBody">
-                            <!-- Populated dynamically -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+<input id="stock" placeholder="Stock (e.g. NVDA)">
+<input id="capital" placeholder="Capital (₹)">
+<input id="risk" placeholder="Risk %">
 
-            <!-- AI Order Parameters Input -->
-            <div class="bg-terminalPanel border border-terminalBorder rounded p-3 flex flex-col gap-3 shrink-0">
-                <div class="font-bold text-gray-300 border-b border-terminalBorder pb-1 flex items-center gap-1">
-                    <i class="fa-solid fa-sliders text-terminalBlue"></i> TERMINAL PARAMETERS
-                </div>
-                <div>
-                    <label class="block text-gray-500 mb-1">Target Instrument:</label>
-                    <input type="text" id="targetStock" class="w-full bg-terminalDark border border-terminalBorder text-white rounded p-1.5 font-bold focus:border-terminalBlue focus:outline-none" value="AAPL">
-                </div>
-                <div class="grid grid-cols-2 gap-2">
-                    <div>
-                        <label class="block text-gray-500 mb-1">Trading Mode:</label>
-                        <select id="tradeMode" class="w-full bg-terminalDark border border-terminalBorder text-white rounded p-1.5 focus:outline-none">
-                            <option value="Intraday">Intraday</option>
-                            <option value="Swing">Swing Trade</option>
-                            <option value="Scalp">Scalp Execution</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-gray-500 mb-1">Asset Class:</label>
-                        <select id="assetCategory" class="w-full bg-terminalDark border border-terminalBorder text-white rounded p-1.5 focus:outline-none">
-                            <option value="Large Cap">Large Cap</option>
-                            <option value="Mid Cap">Mid Cap</option>
-                            <option value="High Beta">High Beta</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="grid grid-cols-2 gap-2">
-                    <div>
-                        <label class="block text-gray-500 mb-1">Risk Capital:</label>
-                        <div class="relative">
-                            <input type="text" id="capital" class="w-full bg-terminalDark border border-terminalBorder text-white rounded p-1.5 focus:outline-none font-bold" value="$100000">
-                        </div>
-                    </div>
-                    <div>
-                        <label class="block text-gray-500 mb-1">Risk Per Trade:</label>
-                        <select id="riskPerTrade" class="w-full bg-terminalDark border border-terminalBorder text-white rounded p-1.5 focus:outline-none">
-                            <option value="1%">1.0% Capital</option>
-                            <option value="0.5%">0.5% Capital</option>
-                            <option value="2%">2.0% Capital</option>
-                        </select>
-                    </div>
-                </div>
-                <button onclick="requestAIEngine()" class="w-full bg-terminalRed hover:bg-red-700 text-white font-bold py-2 rounded flex items-center justify-center space-x-2 transition mt-1">
-                    <i class="fa-solid fa-brain"></i>
-                    <span>EXECUTE SYSTEM ANALYST</span>
-                </button>
-            </div>
-        </section>
+<select id="mode">
+<option value="A++">A++ Deep Institutional Scan</option>
+<option value="A+">A+ Balanced Scan</option>
+<option value="B">B Quick Scan</option>
+</select>
 
-        <!-- COLUMN 2: REAL-TIME CHARTING & QUANTITATIVE BACKTESTER -->
-        <section class="flex-1 flex flex-col gap-2 min-w-0">
-            <!-- Real-Time Interactive Charting -->
-            <div class="flex-1 bg-terminalPanel border border-terminalBorder rounded flex flex-col overflow-hidden relative">
-                <div class="p-2 bg-terminalDark border-b border-terminalBorder flex justify-between items-center shrink-0">
-                    <div class="flex items-center space-x-3">
-                        <span id="chartSymbol" class="font-bold text-white text-sm">AAPL (NASDAQ)</span>
-                        <span id="chartLivePrice" class="font-bold text-terminalGreen text-sm">---</span>
-                        <span id="chartLiveChange" class="text-xs text-gray-400">---</span>
-                    </div>
-                    <div class="flex items-center space-x-2 text-[10px]">
-                        <span class="bg-terminalBorder text-gray-300 px-1.5 py-0.5 rounded">H1 INTERFACE</span>
-                        <span class="bg-terminalBorder text-gray-300 px-1.5 py-0.5 rounded">EMA(20)</span>
-                        <span class="bg-terminalBorder text-gray-300 px-1.5 py-0.5 rounded">VWAP</span>
-                    </div>
-                </div>
-                <!-- Interactive Canvas Chart -->
-                <div class="flex-1 relative bg-[#090d16] overflow-hidden">
-                    <canvas id="liveChartCanvas" class="absolute inset-0 w-full h-full"></canvas>
-                </div>
-            </div>
+<button onclick="runAnalysis()">RUN INSTITUTIONAL ANALYSIS</button>
 
-            <!-- Quantitative Backtester & Signal Control Room -->
-            <div class="h-56 bg-terminalPanel border border-terminalBorder rounded flex flex-col overflow-hidden shrink-0">
-                <div class="flex border-b border-terminalBorder bg-terminalDark">
-                    <button id="tabBacktestBtn" class="flex-1 py-2 text-center border-r border-terminalBorder text-white font-bold bg-terminalPanel" onclick="switchLeftTab('backtest')">
-                        <i class="fa-solid fa-chart-line text-terminalGold mr-1"></i> BACKTEST ENGINE
-                    </button>
-                    <button id="tabSignalsBtn" class="flex-1 py-2 text-center text-gray-400 font-bold" onclick="switchLeftTab('signals')">
-                        <i class="fa-solid fa-bell text-terminalBlue mr-1"></i> SIGNAL ALERTS HUB
-                    </button>
-                </div>
+<hr>
 
-                <!-- Tab View: Backtester -->
-                <div id="tabBacktest" class="p-3 flex-1 flex flex-col gap-2 overflow-y-auto">
-                    <div class="grid grid-cols-3 gap-2 shrink-0">
-                        <div>
-                            <label class="block text-gray-500 mb-0.5 text-[10px]">Backtest Period:</label>
-                            <select id="backtestPeriod" class="w-full bg-terminalDark border border-terminalBorder text-white rounded p-1 text-[11px] focus:outline-none">
-                                <option value="30">Past 30 Days (1H)</option>
-                                <option value="90">Past 90 Days (4H)</option>
-                                <option value="180">Past 180 Days (Daily)</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-gray-500 mb-0.5 text-[10px]">Algorithm Model:</label>
-                            <select id="backtestStrategy" class="w-full bg-terminalDark border border-terminalBorder text-white rounded p-1 text-[11px] focus:outline-none">
-                                <option value="fvg_mss">FVG + MSS Confluence</option>
-                                <option value="ema20">EMA-20 Trend Follow</option>
-                                <option value="vwap_sweep">VWAP Liquidity Sweep</option>
-                            </select>
-                        </div>
-                        <div class="flex items-end">
-                            <button onclick="runBacktest()" class="w-full bg-terminalBlue hover:bg-blue-600 text-white font-bold py-1 px-2 rounded text-[11px] transition h-[26px]">
-                                RUN BACKTEST
-                            </button>
-                        </div>
-                    </div>
-                    <!-- Backtest Results Display -->
-                    <div id="backtestResults" class="flex-1 grid grid-cols-4 gap-2 text-center text-[10px] items-center">
-                        <div class="bg-terminalDark p-1.5 rounded border border-terminalBorder">
-                            <div class="text-gray-500">Total Trades</div>
-                            <div id="backtestTrades" class="text-sm font-bold text-white">--</div>
-                        </div>
-                        <div class="bg-terminalDark p-1.5 rounded border border-terminalBorder">
-                            <div class="text-gray-500">Win Rate</div>
-                            <div id="backtestWinrate" class="text-sm font-bold text-terminalGreen">--</div>
-                        </div>
-                        <div class="bg-terminalDark p-1.5 rounded border border-terminalBorder">
-                            <div class="text-gray-500">Net Profit</div>
-                            <div id="backtestProfit" class="text-sm font-bold text-terminalGreen">--</div>
-                        </div>
-                        <div class="bg-terminalDark p-1.5 rounded border border-terminalBorder">
-                            <div class="text-gray-500">Profit Factor</div>
-                            <div id="backtestFactor" class="text-sm font-bold text-terminalGold">--</div>
-                        </div>
-                    </div>
-                </div>
+<h3>🧠 Engine Status</h3>
+✔ Market Structure<br>
+✔ Liquidity Engine<br>
+✔ Sweep Engine<br>
+✔ MSS Engine<br>
+✔ FVG Engine<br>
+✔ VWAP Engine<br>
+✔ Volume Engine<br>
+✔ Trend Engine<br>
+✔ Risk Engine<br>
+✔ Confluence Engine<br>
+✔ AI Engine
+</div>
 
-                <!-- Tab View: Signals Hub -->
-                <div id="tabSignals" class="p-3 flex-1 hidden flex-col gap-2 overflow-y-auto">
-                    <div class="grid grid-cols-2 gap-2">
-                        <div>
-                            <label class="block text-gray-500 mb-1">Telegram Chat ID:</label>
-                            <input type="text" id="teleChatId" placeholder="e.g. -10012345678" class="w-full bg-terminalDark border border-terminalBorder text-white rounded p-1 text-[11px] focus:outline-none">
-                        </div>
-                        <div>
-                            <label class="block text-gray-500 mb-1">Telegram Bot Token:</label>
-                            <input type="password" id="teleToken" placeholder="e.g. 123456:ABC-DEF..." class="w-full bg-terminalDark border border-terminalBorder text-white rounded p-1 text-[11px] focus:outline-none">
-                        </div>
-                    </div>
-                    <div class="flex justify-between items-center mt-2 p-2 bg-terminalDark rounded border border-terminalBorder">
-                        <span class="text-gray-400">Send instant alert of latest report:</span>
-                        <button onclick="triggerSignalSend()" class="bg-terminalGreen hover:bg-emerald-600 text-white px-3 py-1 rounded font-bold transition">
-                            <i class="fa-solid fa-paper-plane mr-1"></i> TEST DISPATCH
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </section>
+<!-- OUTPUT -->
+<div class="card">
+<h3>📊 AI Institutional Report</h3>
+<div class="output" id="output">Waiting for analysis...</div>
+</div>
 
-        <!-- COLUMN 3: DEEPSEEK R1 CO-PROCESSOR (420px) -->
-        <section class="w-[420px] bg-terminalPanel border border-terminalBorder rounded flex flex-col overflow-hidden shrink-0">
-            <div class="p-2 bg-terminalDark border-b border-terminalBorder flex justify-between items-center">
-                <span class="font-bold text-terminalGold flex items-center gap-1">
-                    <i class="fa-solid fa-microchip"></i> ANALYST CO-PROCESSOR OUTPUT
-                </span>
-                <span id="modelIndicator" class="text-[9px] bg-terminalBorder text-gray-400 px-1.5 py-0.5 rounded font-mono">
-                    MODEL: deepseek/deepseek-r1:free
-                </span>
-            </div>
-            
-            <!-- Output Console Window -->
-            <div id="consoleLog" class="flex-1 p-3 overflow-y-auto text-gray-300 space-y-3 leading-relaxed font-sans text-xs select-text">
-                <div class="p-3 bg-terminalDark rounded border border-terminalBorder font-mono text-gray-400">
-                    <p class="text-terminalGold"><i class="fa-solid fa-triangle-exclamation"></i> TERMINAL SECURE INITIALIZATION SUCCESS</p>
-                    <p class="mt-2 text-[11px] leading-4">Please input your secure OpenRouter API Key in the "CORE API SETTINGS" menu before requesting AI setup generations. If no key is set, the terminal will utilize simulated local analysis loops.</p>
-                </div>
-            </div>
+<!-- CHART -->
+<div class="card" style="grid-column:span 2;">
+<h3>📈 Live Market Chart</h3>
+<iframe src="https://s.tradingview.com/widgetembed/?symbol=NASDAQ:AAPL&interval=15&theme=dark"></iframe>
+</div>
 
-            <!-- Action Controllers -->
-            <div class="p-2 border-t border-terminalBorder bg-terminalDark flex gap-2">
-                <button onclick="exportToPDF()" id="pdfBtn" disabled class="flex-1 bg-terminalBorder hover:bg-gray-700 text-gray-400 font-bold py-1.5 rounded flex items-center justify-center space-x-1.5 transition disabled:opacity-50 disabled:cursor-not-allowed">
-                    <i class="fa-solid fa-file-pdf"></i>
-                    <span>GENERATE JOURNAL PDF</span>
-                </button>
-                <button onclick="clearConsole()" class="bg-terminalBorder hover:bg-gray-700 text-white p-1.5 rounded transition" title="Clear Console">
-                    <i class="fa-solid fa-trash-can"></i>
-                </button>
-            </div>
-        </section>
+</div>
 
-    </main>
+<!-- SETTINGS MODAL -->
+<div class="modal" id="settingsModal">
+<div class="modal-content">
 
-    <!-- SETTINGS MODAL -->
-    <div id="settingsModal" class="fixed inset-0 bg-black/80 flex items-center justify-center z-50 hidden">
-        <div class="bg-terminalPanel border border-terminalBorder rounded w-96 p-4 flex flex-col gap-4">
-            <div class="flex justify-between items-center border-b border-terminalBorder pb-2">
-                <span class="text-sm font-bold text-white flex items-center gap-1.5">
-                    <i class="fa-solid fa-shield-halved text-terminalGold"></i> CORE SYSTEM PREFERENCES
-                </span>
-                <button onclick="closeSettingsModal()" class="text-gray-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+<span class="close" onclick="closeSettings()">×</span>
+
+<h3>🔌 OpenRouter Settings</h3>
+
+<input id="apiKey" type="password" placeholder="OpenRouter API Key">
+<input id="model" placeholder="Model Name">
+
+<button onclick="saveSettings()">Save Settings</button>
+<button onclick="testAPI()">Test Connection</button>
+
+</div>
+</div>
+
+<script>
+
+// ----------------------
+// INIT STORAGE
+// ----------------------
+function loadSettings(){
+    document.getElementById("apiKey").value =
+        localStorage.getItem("or_key") || "";
+
+    document.getElementById("model").value =
+        localStorage.getItem("or_model") || "deepseek/deepseek-r1:free";
+}
+loadSettings();
+
+// ----------------------
+// MODAL CONTROL
+// ----------------------
+function openSettings(){
+    document.getElementById("settingsModal").style.display="block";
+}
+
+function closeSettings(){
+    document.getElementById("settingsModal").style.display="none";
+}
+
+// ----------------------
+// SAVE SETTINGS
+// ----------------------
+function saveSettings(){
+    localStorage.setItem("or_key", document.getElementById("apiKey").value);
+    localStorage.setItem("or_model", document.getElementById("model").value);
+    alert("Settings Saved ✅");
+}
+
+// ----------------------
+// TEST API
+// ----------------------
+async function testAPI(){
+
+let key = localStorage.getItem("or_key");
+
+if(!key){
+    alert("No API Key Found ❌");
+    return;
+}
+
+try{
+    let res = await fetch("https://openrouter.ai/api/v1/models",{
+        headers:{
+            "Authorization":"Bearer " + key
+        }
+    });
+
+    if(res.ok){
+        alert("OpenRouter Connected ✅");
+    }else{
+        alert("API Error ❌");
+    }
+
+}catch(e){
+    alert("Connection Failed ❌");
+}
+}
+
+// ----------------------
+// OPENROUTER CALL
+// ----------------------
+async function callAI(prompt){
+
+let key = localStorage.getItem("or_key");
+let model = localStorage.getItem("or_model");
+
+if(!key){
+    return "❌ Error connect to OpenRouter API";
+}
+
+try{
+    let res = await fetch(
+        "https://openrouter.ai/api/v1/chat/completions",
+        {
+            method:"POST",
+            headers:{
+                "Authorization":"Bearer " + key,
+                "Content-Type":"application/json"
+            },
+            body:JSON.stringify({
+                model:model,
+                messages:[
+                    {
+                        role:"system",
+                        content:`You are Trade GPT Pro Institutional Analyst.
+You analyze using:
+Market Structure, Liquidity, Sweep, MSS, FVG, VWAP, Volume, Trend, Risk, Confluence.
+
+Output must be structured like a professional trading report in Markdown.`
+                    },
+                    {
+                        role:"user",
+                        content:prompt
+                    }
+                ]
+            })
+        }
+    );
+
+    let data = await res.json();
+
+    if(data.error){
+        return "❌ Error connect to OpenRouter API";
+    }
+
+    return data.choices[0].message.content;
+
+}catch(e){
+    return "❌ Error connect to OpenRouter API";
+}
+
+}
+
+// ----------------------
+// MAIN ANALYSIS ENGINE
+// ----------------------
+async function runAnalysis(){
+
+let stock = document.getElementById("stock").value;
+let capital = document.getElementById("capital").value;
+let risk = document.getElementById("risk").value;
+let mode = document.getElementById("mode").value;
+
+document.getElementById("output").innerHTML =
+"🧠 Running institutional AI analysis...";
+
+let prompt = `
+Stock: ${stock}
+Capital: ${capital}
+Risk: ${risk}
+Mode: ${mode}
+
+Run full Trade GPT Pro 15-engine analysis.
+
+Return:
+
+# 📊 Trade Report
+- Market Structure
+- Liquidity Analysis
+- MSS
+- FVG
+- VWAP
+- Volume
+- Trend Alignment
+
+# 🧠 Confluence Score
+/100 scoring
+
+# 📌 Trade Plan
+Entry, SL, Targets
+
+# ⚠️ Risk Notes
+`;
+
+let result = await callAI(prompt);
+
+// MARKDOWN RENDER
+document.getElementById("output").innerHTML =
+marked.parse(result);
+
+}
+
+</script>
+
+</body>
+</html>
