@@ -1,690 +1,581 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Trade GPT Pro — Terminal UI v4.1</title>
-
-<!-- Marked.js CDN (With fallback built into JS if this fails to load) -->
-<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-
-<style>
-:root {
-    --bg-main: #070b14;
-    --bg-card: #0f172a;
-    --border-color: #1e293b;
-    --text-primary: #f8fafc;
-    --text-muted: #94a3b8;
-    --accent-blue: #3b82f6;
-    --accent-green: #10b981;
-    --accent-red: #ef4444;
-    --accent-yellow: #f59e0b;
-}
-
-body {
-    margin: 0;
-    padding: 0;
-    background-color: var(--bg-main);
-    color: var(--text-primary);
-    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-    font-size: 13px;
-    box-sizing: border-box;
-}
-
-header {
-    background: #0f172a;
-    padding: 12px 20px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 1px solid var(--border-color);
-}
-
-.terminal-title {
-    font-size: 15px;
-    font-weight: bold;
-    letter-spacing: 1px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.btn-settings {
-    background: var(--accent-blue);
-    color: white;
-    border: none;
-    padding: 6px 12px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-family: inherit;
-    font-size: 11px;
-    font-weight: bold;
-    transition: background 0.2s;
-}
-
-.btn-settings:hover {
-    background: #2563eb;
-}
-
-/* Layout Grid */
-.container {
-    padding: 15px;
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-}
-
-.top-section {
-    display: grid;
-    grid-template-columns: 320px 1fr 320px;
-    gap: 15px;
-}
-
-@media (max-width: 1024px) {
-    .top-section {
-        grid-template-columns: 1fr;
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>ChessMind AI – Interactive Chess Coach</title>
+  <!-- Chessboard.js and Chess.js from CDN -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/chessboard-js/1.0.0/chessboard-1.0.0.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.12.0/chess.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/chessboard-js/1.0.0/chessboard-1.0.0.min.js"></script>
+  <style>
+    /* ----- Modern Dark Theme with Glassmorphism ----- */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #0b0f15;
+      color: #e0e6ed;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow-x: hidden;
     }
-}
-
-.card {
-    background: var(--bg-card);
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    height: 480px;
-}
-
-.card-header {
-    background: #1e293b;
-    padding: 10px 15px;
-    font-weight: bold;
-    font-size: 12px;
-    letter-spacing: 0.5px;
-    border-bottom: 1px solid var(--border-color);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.card-body {
-    padding: 15px;
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    overflow-y: auto;
-}
-
-/* Inputs styling */
-.form-group {
-    margin-bottom: 12px;
-}
-
-.form-group label {
-    display: block;
-    font-size: 11px;
-    color: var(--text-muted);
-    margin-bottom: 4px;
-    text-transform: uppercase;
-}
-
-input, select {
-    width: 100%;
-    background: #070b14;
-    border: 1px solid var(--border-color);
-    color: var(--text-primary);
-    padding: 8px 10px;
-    border-radius: 4px;
-    font-family: inherit;
-    font-size: 12px;
-    box-sizing: border-box;
-}
-
-input:focus, select:focus {
-    outline: 1px solid var(--accent-blue);
-}
-
-.btn-run {
-    background: var(--accent-green);
-    color: #070b14;
-    border: none;
-    padding: 10px;
-    border-radius: 4px;
-    font-weight: bold;
-    cursor: pointer;
-    font-family: inherit;
-    font-size: 12px;
-    width: 100%;
-    margin-top: auto;
-    transition: background 0.2s;
-}
-
-.btn-run:hover {
-    background: #059669;
-}
-
-/* Output Area */
-.output-display {
-    white-space: pre-wrap;
-    font-family: inherit;
-    line-height: 1.5;
-    flex: 1;
-}
-
-.output-display p {
-    margin-top: 0;
-    margin-bottom: 8px;
-}
-
-/* Chat Panel */
-.chat-container {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-}
-
-.chat-history {
-    flex: 1;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    padding-bottom: 10px;
-    border-bottom: 1px solid var(--border-color);
-}
-
-.chat-bubble {
-    padding: 8px 12px;
-    border-radius: 6px;
-    max-width: 85%;
-    line-height: 1.4;
-    word-break: break-word;
-}
-
-.chat-bubble.user {
-    background: #1e293b;
-    align-self: flex-end;
-    color: var(--text-primary);
-}
-
-.chat-bubble.assistant {
-    background: #1e3a8a;
-    align-self: flex-start;
-    color: var(--text-primary);
-}
-
-.chat-bubble.system {
-    background: #312e81;
-    align-self: center;
-    font-size: 11px;
-    color: var(--text-muted);
-}
-
-.chat-input-wrapper {
-    display: flex;
-    gap: 6px;
-    margin-top: 10px;
-}
-
-.chat-input-wrapper input {
-    flex: 1;
-}
-
-.btn-send {
-    background: var(--accent-blue);
-    color: white;
-    border: none;
-    padding: 0 15px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-family: inherit;
-    font-weight: bold;
-}
-
-/* TradingView Chart Frame */
-.chart-card {
-    height: 480px;
-}
-
-.chart-frame-container {
-    width: 100%;
-    height: 100%;
-}
-
-iframe {
-    width: 100%;
-    height: 100%;
-    border: none;
-}
-
-/* Modal Styling */
-.modal {
-    display: none;
-    position: fixed;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    background: rgba(0,0,0,0.85);
-    z-index: 1000;
-    align-items: center;
-    justify-content: center;
-}
-
-.modal-content {
-    background: var(--bg-card);
-    border: 1px solid var(--border-color);
-    width: 450px;
-    max-width: 90%;
-    border-radius: 8px;
-    overflow: hidden;
-}
-
-.badge-demo {
-    background: var(--accent-yellow);
-    color: black;
-    padding: 2px 6px;
-    border-radius: 3px;
-    font-size: 10px;
-    font-weight: bold;
-    display: inline-block;
-    margin-bottom: 10px;
-}
-
-/* General Utilities */
-.text-green { color: var(--accent-green); }
-.text-red { color: var(--accent-red); }
-.text-yellow { color: var(--accent-yellow); }
-.text-blue { color: var(--accent-blue); }
-.text-muted { color: var(--text-muted); }
-.text-center { text-align: center; }
-
-</style>
+    .container {
+      display: none;
+      width: 100%;
+      max-width: 1200px;
+      margin: 1rem;
+      gap: 1rem;
+    }
+    .home-screen {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1.5rem;
+      text-align: center;
+    }
+    .home-screen h1 {
+      font-size: 3rem;
+      background: linear-gradient(135deg, #4facfe, #00f2fe);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.8rem;
+      justify-content: center;
+    }
+    button, .btn {
+      background: rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255,255,255,0.15);
+      color: #e0e6ed;
+      padding: 0.8rem 1.8rem;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+    }
+    button:hover, .btn:hover {
+      background: rgba(79, 172, 254, 0.2);
+      border-color: #4facfe;
+      box-shadow: 0 0 18px rgba(79,172,254,0.3);
+      transform: translateY(-2px);
+    }
+    select {
+      background: #1e2530;
+      border: 1px solid #2f3b4b;
+      color: #e0e6ed;
+      padding: 0.6rem 1rem;
+      border-radius: 10px;
+      margin: 0.3rem;
+    }
+    .game-layout {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    .board-panel { flex: 1 1 400px; }
+    .info-panel {
+      flex: 1 1 300px;
+      background: rgba(20, 25, 35, 0.75);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 20px;
+      padding: 1.2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    .coach-message {
+      background: rgba(255,255,255,0.06);
+      border-left: 3px solid #4facfe;
+      padding: 0.8rem 1rem;
+      border-radius: 10px;
+      font-size: 0.9rem;
+    }
+    .move-class { font-weight: bold; color: #4facfe; }
+    .eval-bar {
+      display: flex;
+      height: 12px;
+      width: 100%;
+      background: #1a1f2b;
+      border-radius: 20px;
+      overflow: hidden;
+      margin: 0.3rem 0;
+    }
+    .eval-white { background: #f0f0f0; height: 100%; transition: width 0.4s; }
+    .eval-black { background: #1f1f1f; height: 100%; }
+    .captured { display: flex; gap: 0.3rem; font-size: 1.2rem; }
+    .thinking { animation: pulse 1.5s infinite; }
+    @keyframes pulse { 0% { opacity: 0.6; } 50% { opacity: 1; } 100% { opacity: 0.6; } }
+    .review-report {
+      background: #131922;
+      border-radius: 16px;
+      padding: 1rem;
+    }
+    /* mobile responsive */
+    @media (max-width: 768px) {
+      .game-layout { flex-direction: column; }
+      .info-panel { max-height: none; }
+    }
+  </style>
 </head>
 <body>
-
-<header>
-    <div class="terminal-title">
-        <span class="text-red">🔥</span> TRADE GPT PRO TERMINAL UI <span class="text-muted" style="font-size:11px;">[v4.1]</span>
+  <!-- Home Screen -->
+  <div id="homeScreen" class="home-screen">
+    <h1>♞ ChessMind AI</h1>
+    <p>Your personal grandmaster coach</p>
+    <div class="buttons">
+      <button onclick="startGame()">▶ Play Game</button>
+      <button onclick="alert('Coming soon')">🔍 Analysis Mode</button>
+      <button onclick="alert('Coming soon')">📘 Learn Mode</button>
+      <button onclick="alert('Settings')">⚙️ Settings</button>
     </div>
-    <button class="btn-settings" onclick="openModal()">🔧 Setup API Engine</button>
-</header>
-
-<div class="container">
-    
-    <!-- TOP WORKSPACE -->
-    <div class="top-section">
-        
-        <!-- COLUMN 1: INPUT SYSTEM -->
-        <div class="card">
-            <div class="card-header">
-                <span>📊 SYSTEM INPUTS</span>
-                <span id="feedStatus" class="text-yellow">Local Feed</span>
-            </div>
-            <div class="card-body">
-                <div class="form-group">
-                    <label for="stock">Stock Symbol</label>
-                    <input id="stock" type="text" placeholder="e.g. AAPL, NVDA, TSLA" value="AAPL">
-                </div>
-                
-                <div class="form-group">
-                    <label for="capital">Trade Capital ($)</label>
-                    <input id="capital" type="number" placeholder="e.g. 100000" value="100000">
-                </div>
-                
-                <div class="form-group">
-                    <label for="risk">Max Risk Limit (%)</label>
-                    <input id="risk" type="number" step="0.1" placeholder="e.g. 1.0" value="1.0">
-                </div>
-                
-                <div class="form-group">
-                    <label for="mode">Analysis Mode</label>
-                    <select id="mode">
-                        <option value="A++">A++ Deep Institutional Scan</option>
-                        <option value="A+">A+ Balanced Analysis</option>
-                        <option value="B">B Fast Rule Scan</option>
-                    </select>
-                </div>
-                
-                <button class="btn-run" id="btnRun" onclick="executePipeline()">RUN 15-ENGINE PIPELINE</button>
-            </div>
-        </div>
-        
-        <!-- COLUMN 2: EXECUTIVE REPORT CARD OUTPUT -->
-        <div class="card">
-            <div class="card-header">
-                <span>🧠 AI EXECUTIVE REPORT CARD</span>
-                <span class="text-green" id="engineStatus">IDLE</span>
-            </div>
-            <div class="card-body" style="background: #070b14;">
-                <div class="output-display" id="reportOutput">
-<span class="text-muted">// System standing by.
-// You can run the analysis immediately!
-// (Runs in Sandbox Demo mode if API keys are not connected yet)</span>
-                </div>
-            </div>
-        </div>
-        
-        <!-- COLUMN 3: HELP ME CHAT COMPONENT -->
-        <div class="card">
-            <div class="card-header">
-                <span>💬 SYSTEM HELP ASSISTANT</span>
-                <span class="text-blue">Active</span>
-            </div>
-            <div class="card-body">
-                <div class="chat-container">
-                    <div class="chat-history" id="chatHistory">
-                        <div class="chat-bubble system">
-                            Welcome to Trade GPT Pro Support. Ask me anything regarding execution models, risk management, or technical system setups.
-                        </div>
-                    </div>
-                    <div class="chat-input-wrapper">
-                        <input id="chatInput" type="text" placeholder="Ask assistant..." onkeypress="handleChatKey(event)">
-                        <button class="btn-send" onclick="sendChatMessage()">Send</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
+    <div>
+      <label>Difficulty:</label>
+      <select id="difficultySelect">
+        <option value="beginner">Beginner</option>
+        <option value="intermediate">Intermediate</option>
+        <option value="advanced">Advanced</option>
+        <option value="master">Master</option>
+        <option value="grandmaster">Grandmaster</option>
+        <option value="custom">Custom ELO</option>
+      </select>
+      <select id="customElo" style="display:none;">
+        <option value="100">100</option>
+        <option value="300">300</option>
+        <option value="500">500</option>
+        <option value="800">800</option>
+        <option value="1000">1000</option>
+        <option value="1200">1200</option>
+        <option value="1500">1500</option>
+        <option value="1800">1800</option>
+        <option value="2000">2000</option>
+        <option value="2200">2200</option>
+        <option value="2500">2500</option>
+        <option value="2800">2800</option>
+        <option value="3000">3000</option>
+        <option value="3200">3200</option>
+      </select>
     </div>
+  </div>
 
-    <!-- BOTTOM WORKSPACE: TRADINGVIEW PANEL -->
-    <div class="card chart-card">
-        <div class="card-header">
-            <span>📈 REAL-TIME TRADINGVIEW INTEGRATION</span>
-            <span id="chartSymbol" class="text-muted">NASDAQ:AAPL</span>
+  <!-- Game Container (hidden initially) -->
+  <div id="gameContainer" class="container">
+    <div class="game-layout">
+      <div class="board-panel">
+        <div id="board" style="width: 100%; max-width: 500px; margin: 0 auto;"></div>
+        <div style="display: flex; justify-content: space-between; margin-top: 0.5rem;">
+          <button onclick="flipBoard()">🔄 Flip</button>
+          <button onclick="undoMove()">↩ Undo</button>
+          <button onclick="requestHint()">💡 Hint</button>
+          <button onclick="showReview()">📊 Review</button>
         </div>
-        <div class="chart-frame-container" id="chartContainer">
-            <iframe id="tvIframe" src="https://s.tradingview.com/widgetembed/?symbol=NASDAQ:AAPL&interval=15&theme=dark"></iframe>
+      </div>
+      <div class="info-panel" id="infoPanel">
+        <div>
+          <strong>Evaluation</strong>
+          <div class="eval-bar"><div class="eval-white" id="evalWhite" style="width:50%"></div></div>
+          <span id="evalText">+0.0</span>
         </div>
+        <div><strong>Material:</strong> <span id="materialCount">Equal</span></div>
+        <div class="captured" id="capturedWhite"></div>
+        <div class="captured" id="capturedBlack"></div>
+        <div><strong>Opening:</strong> <span id="openingName">-</span></div>
+        <div><strong>Phase:</strong> <span id="gamePhase">-</span></div>
+        <div class="coach-message" id="coachMessage">Welcome! Make your first move.</div>
+        <div><strong>Opponent plan:</strong> <span id="opponentPlan">-</span></div>
+        <div id="thinkingProcess" style="font-size:0.85rem;"></div>
+        <div><strong>Move list:</strong> <div id="moveList" style="max-height:150px; overflow-y:auto;"></div></div>
+      </div>
     </div>
+  </div>
 
-</div>
+  <!-- Mistake popup (hidden) -->
+  <div id="mistakePopup" style="display:none; position:fixed; top:20%; left:50%; transform:translate(-50%,0); background:#192231; border:1px solid #4facfe; border-radius:16px; padding:1.5rem; z-index:100; width:90%; max-width:400px;">
+    <h3>🔍 Mistake Analysis</h3>
+    <p id="mistakeText"></p>
+    <button onclick="closeMistakePopup()">Got it</button>
+  </div>
 
-<!-- SETTINGS MODAL -->
-<div class="modal" id="settingsModal">
-    <div class="modal-content">
-        <div class="card-header">
-            <span>🔌 CONNECTIVITY CONFIGURATION</span>
-            <span style="cursor:pointer;" onclick="closeModal()">✕</span>
-        </div>
-        <div class="card-body">
-            <div class="form-group">
-                <label for="orKey">OpenRouter API Key</label>
-                <input id="orKey" type="password" placeholder="sk-or-...">
-            </div>
-            <div class="form-group">
-                <label for="orModel">OpenRouter Model Endpoint</label>
-                <input id="orModel" type="text" placeholder="e.g. deepseek/deepseek-r1:free" value="deepseek/deepseek-r1:free">
-            </div>
-            <div class="form-group">
-                <label for="finnhubKey">Finnhub API Key (Real-Time Price Feed)</label>
-                <input id="finnhubKey" type="password" placeholder="Get standard key from finnhub.io">
-            </div>
-            <div style="margin-top: 15px; display: flex; gap: 10px;">
-                <button class="btn-run" style="background: var(--accent-blue); color: white;" onclick="saveSettings()">SAVE SETTINGS</button>
-                <button class="btn-run" style="background: #475569; color: white;" onclick="closeModal()">CANCEL</button>
-            </div>
-        </div>
-    </div>
-</div>
+  <script>
+    // ==================== MODULES ====================
+    // The code is organized as a set of objects/modules to match the proposed architecture.
 
-<script>
-// ==========================================
-// 1. DATA AND STORAGE MANAGEMENT
-// ==========================================
-
-const defaultSettings = {
-    orKey: "",
-    orModel: "deepseek/deepseek-r1:free",
-    finnhubKey: ""
-};
-
-// Retrieve values from local storage safely
-function loadSettings() {
-    try {
-        document.getElementById("orKey").value = localStorage.getItem("or_key") || defaultSettings.orKey;
-        document.getElementById("orModel").value = localStorage.getItem("or_model") || defaultSettings.orModel;
-        document.getElementById("finnhubKey").value = localStorage.getItem("finnhub_key") || defaultSettings.finnhubKey;
-    } catch (e) {
-        console.warn("Could not load from localStorage:", e);
-    }
-    updateFeedBadge();
-}
-
-function saveSettings() {
-    try {
-        localStorage.setItem("or_key", document.getElementById("orKey").value.trim());
-        localStorage.setItem("or_model", document.getElementById("orModel").value.trim());
-        localStorage.setItem("finnhub_key", document.getElementById("finnhubKey").value.trim());
-        alert("Connection settings saved successfully.");
-    } catch (e) {
-        alert("Unable to save to localStorage: " + e.message);
-    }
-    updateFeedBadge();
-    closeModal();
-}
-
-function updateFeedBadge() {
-    const fhKey = localStorage.getItem("finnhub_key");
-    const statusText = document.getElementById("feedStatus");
-    if (fhKey && fhKey.trim() !== "") {
-        statusText.innerText = "Finnhub Live";
-        statusText.className = "text-green";
-    } else {
-        statusText.innerText = "Local Feed";
-        statusText.className = "text-yellow";
-    }
-}
-
-function openModal() {
-    document.getElementById("settingsModal").style.display = "flex";
-}
-function closeModal() {
-    document.getElementById("settingsModal").style.display = "none";
-}
-
-// ==========================================
-// 2. DEFENSIVE MARKDOWN PARSING ENGINE
-// ==========================================
-function parseMarkdownSafely(text) {
-    // 1. Check if external marked library loaded successfully
-    try {
-        if (typeof marked !== 'undefined' && typeof marked.parse === 'function') {
-            return marked.parse(text);
-        } else if (typeof marked === 'function') {
-            return marked(text);
+    // ---------- app.js (main coordinator) ----------
+    const App = {
+      game: null,
+      board: null,
+      engine: null,
+      coach: null,
+      analysis: null,
+      hints: null,
+      review: null,
+      tactics: null,
+      openings: null,
+      evaluation: null,
+      ui: null,
+      difficulty: 'beginner',
+      customElo: 1000,
+      playerColor: 'white',
+      isGameOver: false,
+      moveHistory: [],
+      lastEvaluation: null,
+      init() {
+        this.game = new Chess();
+        this.engine = new StockfishEngine();
+        this.coach = new Coach();
+        this.analysis = new Analysis();
+        this.hints = new Hints();
+        this.review = new Review();
+        this.tactics = new TacticsDetector();
+        this.openings = new OpeningBook();
+        this.evaluation = new Evaluation();
+        this.ui = new UI();
+        this.engine.init();
+        this.ui.showHome();
+      },
+      startGame() {
+        const diff = document.getElementById('difficultySelect').value;
+        if (diff === 'custom') {
+          this.customElo = parseInt(document.getElementById('customElo').value);
+          this.difficulty = 'custom';
+        } else {
+          this.difficulty = diff;
         }
-    } catch (e) {
-        console.warn("External parser failed, using native system fallback:", e);
-    }
-
-    // 2. High-fidelity native terminal markdown fallback
-    let html = text;
-    // Replace Header lines (e.g. ════)
-    html = html.replace(/═══+/g, '<hr style="border: none; border-top: 1px dashed var(--border-color); margin: 10px 0;">');
-    // Strong tags (**text**)
-    html = html.replace(/\*\*(.*?)\*\*/g, '<strong style="color:var(--accent-blue)">$1</strong>');
-    // Bullets (- item)
-    html = html.replace(/^\s*-\s*(.*?)$/gm, '<div style="margin-left: 10px; color:#e2e8f0;">• $1</div>');
-    // Line breaks
-    html = html.replace(/\n/g, '<br>');
-
-    return html;
-}
-
-// ==========================================
-// 3. ANALYSIS PIPELINE & SIMULATOR ENGINE
-// ==========================================
-
-function getTradingViewSymbol(symbol) {
-    symbol = symbol.trim().toUpperCase();
-    if (symbol === "TCS" || symbol === "INFY" || symbol === "RELIANCE") {
-        return "NSE:" + symbol;
-    }
-    return "NASDAQ:" + symbol;
-}
-
-async function fetchFinnhubPrice(symbol) {
-    const key = localStorage.getItem("finnhub_key");
-    if (!key || key.trim() === "") return null;
-    
-    try {
-        const cleanedSymbol = symbol.trim().toUpperCase();
-        const response = await fetch(`https://finnhub.io/api/v1/quote?symbol=${cleanedSymbol}&token=${key}`);
-        if (!response.ok) return null;
-        const data = await response.json();
-        if (data && data.c) {
-            return {
-                currentPrice: data.c,
-                high: data.h,
-                low: data.l,
-                open: data.o,
-                prevClose: data.pc
-            };
-        }
-    } catch (e) {
-        console.error("Finnhub fetching error:", e);
-    }
-    return null;
-}
-
-// Generate an immediate high-fidelity mock response if API keys are missing
-function generateMockReport(stock, capital, risk, mode, priceObj) {
-    const basePrice = priceObj ? priceObj.currentPrice : 154.20;
-    const isBullish = stock.length % 2 === 0; // Deterministic calculation based on symbol
-    const grade = isBullish ? "A+" : "B";
-    const verdict = isBullish ? "BUY" : "NO TRADE";
-    const entryMin = (basePrice * 0.99).toFixed(2);
-    const entryMax = (basePrice * 1.005).toFixed(2);
-    const sl = (basePrice * 0.97).toFixed(2);
-    const t1 = (basePrice * 1.04).toFixed(2);
-    const t2 = (basePrice * 1.08).toFixed(2);
-    const t3 = (basePrice * 1.12).toFixed(2);
-    const score = isBullish ? "8.8" : "5.4";
-    const riskLvl = risk > 2 ? "HIGH" : "LOW";
-
-    const summaryList = isBullish ? `
-- Liquidity Sweep confirmed on daily range lows.
-- Bullish Market Structure Shift (MSS) verified on 15m timeframes.
-- Institutional price holding strong structural support above VWAP line.
-- Volumetric expansion confirmed above standard 20MA index.
-- FVG alignment supports clean mitigation zone for entry.
-` : `
-- Structure exhibits persistent Lower Lows; no dynamic reversal confirmation.
-- Missing liquid sweep of key high-timeframe order block levels.
-- VWAP indicator acts as active overhead ceiling resistance.
-- Volume profile is standard; lacks momentum buy confirmation.
-- Confluence score did not meet strict ${mode} parameters. No Trade model triggered.
-`;
-
-    return `
-<span class="badge-demo">DEMO MODE SIMULATION ACTIVE</span>
-══════════════════════════════
-TRADE GPT PRO REPORT CARD
-══════════════════════════════
-**STOCK:** ${stock}
-**MODE:** ${mode} DEEP SCAN
-
-**GRADE:** ${grade}
-
-**VERDICT:** ${verdict}
-
-**ENTRY ZONE:**
-$${entryMin} - $${entryMax}
-
-**STOP LOSS:**
-$${sl}
-
-**TARGETS:**
-T1: $${t1}
-T2: $${t2}
-T3: $${t3}
-
-**CONFLUENCE SCORE:**
-${score} / 10
-
-**RISK LEVEL:**
-${riskLvl}
-
-**REASON SUMMARY:**
-${summaryList}
-`;
-}
-
-async function callOpenRouter(promptText, systemInstructions) {
-    const key = localStorage.getItem("or_key");
-    const model = localStorage.getItem("or_model") || "deepseek/deepseek-r1:free";
-    
-    if (!key || key.trim() === "") {
-        return null; // Return null so pipeline triggers demo generator gracefully
-    }
-
-    try {
-        const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-            method: "POST",
-            headers: {
-                "Authorization": `Bearer ${key}`,
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                model: model,
-                messages: [
-                    { role: "system", content: systemInstructions },
-                    { role: "user", content: promptText }
-                ]
-            })
+        this.ui.hideHome();
+        this.board = Chessboard('board', {
+          draggable: true,
+          position: 'start',
+          onDragStart: this.onDragStart.bind(this),
+          onDrop: this.onDrop.bind(this),
+          onMouseoutSquare: this.onMouseoutSquare,
+          onMouseoverSquare: this.onMouseoverSquare,
+          onSnapEnd: this.onSnapEnd,
+          orientation: this.playerColor
         });
-
-        if (!response.ok) {
-            const errData = await response.json().catch(() => ({}));
-            const errMsg = errData?.error?.message || `HTTP Status ${response.status}`;
-            throw new Error(errMsg);
+        this.game.reset();
+        this.moveHistory = [];
+        this.isGameOver = false;
+        this.lastEvaluation = null;
+        this.updateAll();
+      },
+      onDragStart(source, piece, position, orientation) {
+        if (this.isGameOver) return false;
+        if (this.game.turn() !== this.playerColor) return false;
+        if ((this.playerColor === 'white' && piece[0] === 'b') || 
+            (this.playerColor === 'black' && piece[0] === 'w')) return false;
+        return true;
+      },
+      onDrop(source, target) {
+        const move = this.game.move({
+          from: source,
+          to: target,
+          promotion: 'q' // always promote to queen for simplicity
+        });
+        if (move === null) return 'snapback';
+        this.afterPlayerMove(move);
+      },
+      afterPlayerMove(move) {
+        this.moveHistory.push(move);
+        this.updateAll();
+        if (this.game.isGameOver()) {
+          this.isGameOver = true;
+          this.coach.gameOverMessage();
+          this.review.generateReport();
+          return;
         }
+        // Let engine respond
+        this.engineMove();
+      },
+      engineMove() {
+        this.engine.getBestMove(this.game.fen(), this.difficulty, this.customElo, (bestMove) => {
+          const move = this.game.move(bestMove);
+          if (move) {
+            this.moveHistory.push(move);
+            this.updateAll();
+            this.coach.opponentMoveComment(move);
+            if (this.game.isGameOver()) {
+              this.isGameOver = true;
+              this.coach.gameOverMessage();
+              this.review.generateReport();
+            }
+          }
+        });
+      },
+      undoMove() {
+        if (this.moveHistory.length < 2) return; // need at least one player move and engine reply
+        this.game.undo(); // undo engine move
+        this.game.undo(); // undo player move
+        this.moveHistory.pop();
+        this.moveHistory.pop();
+        this.board.position(this.game.fen());
+        this.updateAll();
+        this.coach.undoComment();
+      },
+      requestHint() {
+        this.hints.showHint(this.game.fen());
+      },
+      flipBoard() {
+        this.board.flip();
+      },
+      updateAll() {
+        this.board.position(this.game.fen());
+        this.ui.updateEval();
+        this.ui.updateMaterial();
+        this.ui.updateCaptured();
+        this.ui.updateMoveList();
+        this.ui.updateOpening();
+        this.ui.updatePhase();
+        this.tactics.detect(this.game);
+        this.coach.lastMoveComment();
+      },
+      onMouseoverSquare(square, piece) { /* highlight? */ },
+      onMouseoutSquare(square, piece) { /* */ },
+      onSnapEnd() { this.board.position(this.game.fen()); }
+    };
 
-        const data = await response.json();
-        if (data && data.choices && data.choices[0]) {
-            return data.choices[0].message.content;
+    // ---------- engine.js (Stockfish wrapper) ----------
+    class StockfishEngine {
+      constructor() {
+        this.engine = null;
+        this.isReady = false;
+        this.onMessage = null;
+      }
+      init() {
+        // Try to load Stockfish from CDN
+        if (typeof Stockfish === 'function') {
+          this.engine = Stockfish();
+        } else {
+          console.warn('Stockfish not loaded from CDN. Using dummy engine.');
+          this.engine = this.dummyEngine();
         }
-        throw new Error("Invalid API payload returned.");
-    } catch (e) {
-        return `❌ API ERROR: ${e.message}\n\n(Please check your OpenRouter API key and internet connection in Settings)`;
+        this.engine.onmessage = (e) => this.handleMessage(e);
+        this.engine.postMessage('uci');
+        this.engine.postMessage('isready');
+      }
+      dummyEngine() {
+        // Simple random move responder for demo when Stockfish missing
+        return {
+          postMessage: (msg) => {},
+          onmessage: null,
+          _respond: () => {
+            if (this.onMessage) this.onMessage({data: 'readyok'});
+          }
+        };
+      }
+      handleMessage(e) {
+        if (e.data === 'readyok') {
+          this.isReady = true;
+          this.engine.postMessage('ucinewgame');
+        }
+        if (this.onMessage) this.onMessage(e.data);
+      }
+      getBestMove(fen, difficulty, customElo, callback) {
+        if (!this.isReady) {
+          setTimeout(() => this.getBestMove(fen, difficulty, customElo, callback), 100);
+          return;
+        }
+        let skillLevel = 10; // default intermediate
+        if (difficulty === 'beginner') skillLevel = 0;
+        else if (difficulty === 'intermediate') skillLevel = 5;
+        else if (difficulty === 'advanced') skillLevel = 10;
+        else if (difficulty === 'master') skillLevel = 15;
+        else if (difficulty === 'grandmaster') skillLevel = 20;
+        else if (difficulty === 'custom') skillLevel = Math.floor(customElo / 100);
+        this.engine.postMessage('position fen ' + fen);
+        this.engine.postMessage('setoption name Skill Level value ' + skillLevel);
+        this.engine.postMessage('go depth 12');
+        this.onMessage = (msg) => {
+          if (msg.startsWith('bestmove')) {
+            const parts = msg.split(' ');
+            callback(parts[1]);
+          }
+        };
+      }
     }
-}
 
-async function executePipeline() {
-    const btn = document.getElementById("btnRun");
-    const outputDiv = document.getElementById("reportOutput");
-    const engineStatus = document.getElementById("engineStatus");
-    
-    // Safely collect variables
-    const stockEl = document.getElementById("stock");
-    const capitalEl = document.getElementById("capital");
-    const riskEl = document.getElementById("risk");
-    const modeEl = document.getElementById("mode");
-    
-    if (!stockEl || !capitalEl || !riskEl || !modeEl) {
-        alert("Crucial DOM inputs are missing. Please reload the index file.");
-        return;
+    // ---------- coach.js ----------
+    class Coach {
+      lastMoveComment() {
+        const move = App.moveHistory[App.moveHistory.length-1];
+        if (!move) return;
+        const color = move.color === 'w' ? 'White' : 'Black';
+        const analysis = this.classifyMove(move);
+        document.getElementById('coachMessage').innerHTML = 
+          `<span class="move-class">${color}: ${move.san}</span> - ${analysis}`;
+      }
+      classifyMove(move) {
+        // Simplified classification using evaluation change
+        const prevEval = App.lastEvaluation || 0;
+        const curEval = App.evaluation.getEvalScore();
+        const diff = curEval - prevEval;
+        App.lastEvaluation = curEval;
+        if (diff > 2) return 'Brilliant! ⭐';
+        if (diff > 1) return 'Great move 👍';
+        if (diff > 0.5) return 'Good move';
+        if (diff > -0.5) return 'Interesting';
+        if (diff > -1.5) return 'Inaccuracy';
+        if (diff > -3) return 'Mistake';
+        return 'Blunder 💥';
+      }
+      opponentMoveComment(move) {
+        const threats = App.tactics.getThreats(App.game);
+        document.getElementById('opponentPlan').innerText = threats || 'No immediate threats detected.';
+      }
+      undoComment() {
+        document.getElementById('coachMessage').innerHTML = 'Move undone. Take your time.';
+      }
+      gameOverMessage() {
+        const result = App.game.isCheckmate() ? 'Checkmate!' : App.game.isDraw() ? 'Draw' : 'Game over';
+        document.getElementById('coachMessage').innerHTML = `🏁 ${result}`;
+      }
     }
 
-    const stock = stockEl.value.trim().toUpperCase();
-    const capital = capitalEl.value;
-    const risk = riskEl.value;
-    const mode = modeEl.value;
-
-    if (!stock) {
-        alert("Please enter a stock symbol first.");
-        return;
+    // ---------- analysis.js ----------
+    class Analysis {
+      // Additional analysis features can be added here
     }
 
-    // Disable running twice at same time
-    btn.disabled = true;
-    btn.innerText = "PROCESSING...";
-    engineStatus.innerText = "RUNNING";
-    engineStatus.className = "text-yellow";
+    // ---------- hints.js ----------
+    class Hints {
+      showHint(fen) {
+        App.engine.getBestMove(fen, App.difficulty, App.customElo, (best) => {
+          const from = best.slice(0,2);
+          const to = best.slice(2,4);
+          // Show arrow (simplified: highlight squares)
+          document.getElementById('coachMessage').innerHTML = 
+            `💡 Best move: ${best}. Strategic purpose: development, control.`;
+          // Could use chessboard arrows but omitted for simplicity.
+        });
+      }
+    }
 
-    try {
-        // Update TradingView Chart Frame
-        const tvSymbol = getTradingViewSymbol(stock);
-        document.getElementById("chartSymbol").innerText = tvSymbol;
-        do
+    // ---------- review.js ----------
+    class Review {
+      generateReport() {
+        const report = `
+          <div class="review-report">
+            <h3>Game Review</h3>
+            <p>Accuracy: ... (coming soon)</p>
+            <p>Mistakes: ${App.moveHistory.filter(m => App.coach.classifyMove(m).includes('Mistake')).length}</p>
+          </div>`;
+        document.getElementById('coachMessage').innerHTML += report;
+      }
+    }
+
+    // ---------- tactics.js ----------
+    class TacticsDetector {
+      detect(game) {
+        const fen = game.fen();
+        // Very basic pattern detection (placeholder)
+        this.found = [];
+        if (fen.includes('p') && fen.includes('P')) this.found.push('Pawn break possibility');
+      }
+      getThreats(game) {
+        this.detect(game);
+        return this.found.join(', ') || 'None';
+      }
+    }
+
+    // ---------- openings.js ----------
+    class OpeningBook {
+      getName(fen) {
+        // Simple opening recognition based on fullmove number
+        const moves = App.game.history().length;
+        if (moves <= 2) return 'Starting position';
+        if (moves <= 4) return 'Open Game (Italian?)';
+        return 'Unknown';
+      }
+    }
+
+    // ---------- evaluation.js ----------
+    class Evaluation {
+      getEvalScore() {
+        // Quick material count as simple eval
+        const fen = App.game.fen();
+        let score = 0;
+        for (let ch of fen.split(' ')[0]) {
+          if (ch === 'P') score += 1;
+          else if (ch === 'N' || ch === 'B') score += 3;
+          else if (ch === 'R') score += 5;
+          else if (ch === 'Q') score += 9;
+          else if (ch === 'p') score -= 1;
+          else if (ch === 'n' || ch === 'b') score -= 3;
+          else if (ch === 'r') score -= 5;
+          else if (ch === 'q') score -= 9;
+        }
+        return score;
+      }
+    }
+
+    // ---------- ui.js ----------
+    class UI {
+      showHome() {
+        document.getElementById('homeScreen').style.display = 'flex';
+        document.getElementById('gameContainer').style.display = 'none';
+      }
+      hideHome() {
+        document.getElementById('homeScreen').style.display = 'none';
+        document.getElementById('gameContainer').style.display = 'block';
+      }
+      updateEval() {
+        const score = App.evaluation.getEvalScore();
+        const percentage = 50 + (score * 5); // map to width
+        document.getElementById('evalWhite').style.width = Math.min(100, Math.max(0, percentage)) + '%';
+        document.getElementById('evalText').innerText = (score > 0 ? '+' : '') + score.toFixed(1);
+      }
+      updateMaterial() {
+        const score = App.evaluation.getEvalScore();
+        document.getElementById('materialCount').innerText = score > 0 ? 'White ahead' : score < 0 ? 'Black ahead' : 'Equal';
+      }
+      updateCaptured() {
+        // Show captured pieces (simplified)
+        document.getElementById('capturedWhite').innerText = '';
+        document.getElementById('capturedBlack').innerText = '';
+      }
+      updateMoveList() {
+        const moves = App.game.history();
+        let html = '';
+        for (let i=0; i<moves.length; i+=2) {
+          html += `${Math.floor(i/2)+1}. ${moves[i]} ${moves[i+1] || ''}<br>`;
+        }
+        document.getElementById('moveList').innerHTML = html;
+      }
+      updateOpening() {
+        document.getElementById('openingName').innerText = App.openings.getName(App.game.fen());
+      }
+      updatePhase() {
+        const pieces = App.game.fen().split(' ')[0].replace(/[^a-zA-Z]/g, '').length;
+        if (pieces > 28) document.getElementById('gamePhase').innerText = 'Opening';
+        else if (pieces > 16) document.getElementById('gamePhase').innerText = 'Middlegame';
+        else document.getElementById('gamePhase').innerText = 'Endgame';
+      }
+    }
+
+    // ---------- Initialize App ----------
+    window.onload = () => App.init();
+
+    // Show/hide custom ELO selector
+    document.getElementById('difficultySelect').addEventListener('change', function(e) {
+      document.getElementById('customElo').style.display = e.target.value === 'custom' ? 'inline' : 'none';
+    });
+
+    // Expose startGame to global scope for button onclick
+    window.startGame = () => App.startGame();
+    window.undoMove = () => App.undoMove();
+    window.requestHint = () => App.requestHint();
+    window.flipBoard = () => App.flipBoard();
+    window.showReview = () => App.review.generateReport();
+  </script>
+</body>
+</html>
