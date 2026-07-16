@@ -620,7 +620,7 @@
             box-shadow: 0 24px 70px var(--glow), 0 0 140px var(--glow2);
             animation: welcomePulse 5s ease-in-out infinite;
         }
-         @keyframes welcomePulse {
+        @keyframes welcomePulse {
             0%,
             100% {
                 box-shadow: 0 24px 70px var(--glow), 0 0 140px var(--glow2);
@@ -887,7 +887,7 @@
             margin: 8px 0;
             overflow: hidden;
         }
-        .msg-content .expandable summary {
+         .msg-content .expandable summary {
             padding: 10px 14px;
             cursor: pointer;
             background: rgba(255, 255, 255, 0.03);
@@ -1159,7 +1159,7 @@
             backdrop-filter: blur(5px);
             animation: fadeIn 0.2s ease-out;
         }
-      @keyframes fadeIn {
+        @keyframes fadeIn {
             from {
                 opacity: 0;
             }
@@ -1469,33 +1469,30 @@
     <div id="drop-zone"><span class="drop-icon">📁</span><span class="drop-text">Drop files or images here</span></div>
     <script>
         (function() {
-            //
-         ═══════════════════════════════════════════
+            // ═══════════════════════════════════════════
             // NOVA AI v1.1 — CONFIGURATION
+            // Replace these with your actual OpenRouter API keys
             // ═══════════════════════════════════════════
             const CONFIG = {
                 models: {
-                    // Nova 1.1 — Fast everyday model
                     nova1: {
-                        apiKey: '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',
+                        apiKey: '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', // ← Replace with your key
                         model: 'openai/gpt-oss-20b:free',
                         fallback: 'google/gemma-7b-it:free'
                     },
-                    // Nova HyperOS — Balanced academic model
                     hyperos: {
-                        apiKey: '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',
+                        apiKey: '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', // ← Replace with your key
                         model: 'tencent/hunyuan-h3:free',
                         fallback: 'meta-llama/llama-3.2-3b-instruct:free'
                     },
-                    // Nova Extent 2.3 — Deep reasoning model
                     extent: {
-                        apiKey: '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',
+                        apiKey: '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', // ← Replace with your key
                         model: 'poolside/laguna-m.1:free',
                         fallback: 'google/gemma-7b-it:free'
                     }
                 },
                 visionModel: {
-                    apiKey: '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',
+                    apiKey: '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', // ← Replace with your key (or same as above)
                     model: 'openai/gpt-4o-mini:free'
                 },
                 endpoint: 'https://openrouter.ai/api/v1/chat/completions'
@@ -1536,7 +1533,7 @@
             let currentStreamContent = '';
             let isSidebarOpen = !window.matchMedia('(max-width:768px)').matches;
             let memoryItems = [];
-            let activeNovaMode = 'nova1'; // 'nova1' | 'hyperos' | 'extent'
+            let activeNovaMode = 'nova1';
             let activeTools = {
                 thinking: true,
                 'deep-analysis': false,
@@ -1555,8 +1552,8 @@
                 animationsReduced: false,
                 sidebarWidth: 310,
             };
-            let uploadedFiles = []; // Track files for current message
-            let pendingImages = []; // Base64 images to include in request
+            let uploadedFiles = [];
+            let pendingImages = [];
 
             // ═══════════════════════════════════════════
             // PERSISTENCE
@@ -1573,7 +1570,7 @@
                     if (mode && ['nova1', 'hyperos', 'extent'].includes(mode)) activeNovaMode = mode;
                     const tools = localStorage.getItem('nova_v2_tools');
                     if (tools) activeTools = { ...activeTools, ...JSON.parse(tools) };
-                } catch (e) { /* silent */ }
+                } catch (e) {}
                 if (chats.length === 0) {
                     chats.push(createChat('Welcome Chat'));
                 }
@@ -1589,7 +1586,7 @@
                     localStorage.setItem('nova_v2_settings', JSON.stringify(settings));
                     localStorage.setItem('nova_v2_mode', activeNovaMode);
                     localStorage.setItem('nova_v2_tools', JSON.stringify(activeTools));
-                } catch (e) { /* silent */ }
+                } catch (e) {}
             }
 
             function createChat(title = 'New Conversation') {
@@ -1658,14 +1655,12 @@
             }
 
             function getEffectiveModelConfig() {
-                // Returns the model config based on Nova mode + content analysis
                 const chat = getCurrentChat();
                 let targetTier = activeNovaMode;
                 if (chat && chat.messages.length > 0) {
                     const lastUserMsg = [...chat.messages].reverse().find(m => m.role === 'user');
                     if (lastUserMsg) {
                         const scores = analyzePromptComplexity(lastUserMsg.content);
-                        // Auto-upgrade within reason
                         if (activeNovaMode === 'nova1' && (scores.deepReasoning >= 2 || scores.academic >= 3)) {
                             targetTier = 'hyperos';
                         }
@@ -1686,8 +1681,9 @@
                 return labels[mode] || '⚡ Nova 1.1';
             }
 
-            // ═══════════════════════════════════════════
-            // PARTICLES & AURORA SYSTEM
+            //
+         ═══════════════════════════════════════════
+            // PARTICLES & AURORA
             // ═══════════════════════════════════════════
             function initParticles() {
                 const ctx = particleCanvas.getContext('2d');
@@ -1760,28 +1756,24 @@
                 updateAurora();
             }
 
-            //
-         ═══════════════════════════════════════════
+            // ═══════════════════════════════════════════
             // PREMIUM MARKDOWN RENDERER
             // ═══════════════════════════════════════════
             function renderMarkdown(text) {
                 if (!text) return '';
                 let html = text;
-                // Store code blocks to protect them
                 const codeBlocks = [];
                 html = html.replace(/```(\w*)\n([\s\S]*?)```/g, (match, lang, code) => {
                     const idx = codeBlocks.length;
                     codeBlocks.push({ lang: lang.trim(), code: code.trimEnd() });
                     return `%%CODEBLOCK_${idx}%%`;
                 });
-                // Store inline code
                 const inlineCodes = [];
                 html = html.replace(/`([^`]+)`/g, (match, code) => {
                     const idx = inlineCodes.length;
                     inlineCodes.push(code);
                     return `%%INLINECODE_${idx}%%`;
                 });
-                // Callout boxes
                 html = html.replace(
                     /^>\s*\*\*(INFO|WARNING|TIP|DANGER|NOTE):\*\*\s*(.+?)(?=\n\n|$)/gm,
                     (match, type, content) => {
@@ -1789,16 +1781,13 @@
                         const cls = type.toLowerCase();
                         return `<div class="callout callout-${cls}"><span>${icons[type]||'📌'}</span><div>${content.trim()}</div></div>`;
                     });
-                // Expandable sections
                 html = html.replace(
                     /<details>\s*<summary>(.+?)<\/summary>\s*([\s\S]*?)<\/details>/g,
                     '<div class="expandable"><summary>$1</summary><div class="expandable-content">$2</div></div>');
-                // Checklist items
                 html = html.replace(/^- \[([ x])\]\s+(.+)$/gm, (match, checked, content) => {
                     const checkMark = checked === 'x' ? '✓' : '';
                     return `<div class="checklist-item"><span class="check-box">${checkMark}</span><span>${content}</span></div>`;
                 });
-                // Tables (keep existing)
                 html = html.replace(/(\|[^\n]+\|\n\|[-| :]+\|\n((?:\|[^\n]+\|\n?)*))/g, (match) => {
                     const rows = match.trim().split('\n');
                     if (rows.length < 2) return match;
@@ -1818,37 +1807,28 @@
                     tableHtml += '</table>';
                     return tableHtml;
                 });
-                // Divider
                 html = html.replace(/^---$/gm, '<hr class="divider">');
-                // Blockquotes (non-callout)
                 html = html.replace(/^>\s?(.+)$/gm, '<blockquote>$1</blockquote>');
-                // Headings
                 html = html.replace(/^######\s+(.+)$/gm, '<h6>$1</h6>');
                 html = html.replace(/^#####\s+(.+)$/gm, '<h5>$1</h5>');
                 html = html.replace(/^####\s+(.+)$/gm, '<h4>$1</h4>');
                 html = html.replace(/^###\s+(.+)$/gm, '<h3>$1</h3>');
                 html = html.replace(/^##\s+(.+)$/gm, '<h2>$1</h2>');
                 html = html.replace(/^#\s+(.+)$/gm, '<h1>$1</h1>');
-                // Bold & Italic
                 html = html.replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>');
                 html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
                 html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
-                // Strikethrough
                 html = html.replace(/~~(.+?)~~/g, '<del>$1</del>');
-                // Links
                 html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g,
                     '<a href="$2" target="_blank" style="color:var(--accent2);text-decoration:underline;text-underline-offset:3px;">$1</a>');
-                // Restore inline code
                 html = html.replace(/%%INLINECODE_(\d+)%%/g, (match, idx) => {
                     return `<code>${escapeHtml(inlineCodes[parseInt(idx)])}</code>`;
                 });
-                // Restore code blocks
                 html = html.replace(/%%CODEBLOCK_(\d+)%%/g, (match, idx) => {
                     const cb = codeBlocks[parseInt(idx)];
                     const langAttr = cb.lang ? ` class="language-${cb.lang}"` : '';
                     return `<pre><code${langAttr}>${escapeHtml(cb.code)}</code><button class="copy-code-btn">Copy</button></pre>`;
                 });
-                // Line breaks
                 html = html.replace(/\n/g, '<br>');
                 return html;
             }
@@ -1859,44 +1839,31 @@
                 return div.innerHTML;
             }
 
-            // ═══════════════════════════════════════════
-            // AUTO-FORMAT DETECTION FOR RESPONSES
-            // ═══════════════════════════════════════════
             function detectAndEnhanceFormatting(content, userQuery) {
                 const lower = content.toLowerCase();
                 const queryLower = (userQuery || '').toLowerCase();
                 let enhanced = content;
-                // If content already has markdown structure, trust it
                 if (content.includes('#') || content.includes('```') || content.includes('|') || content.includes(
-                        '- [ ]')) {
-                    return enhanced;
-                }
-                // Detect comparison patterns
+                        '- [ ]')) return enhanced;
                 const comparisonIndicators = ['vs', 'versus', 'compared to', 'difference between', 'compare',
                     'contrast', 'pros and cons', 'advantages', 'disadvantages'
                 ];
                 const isComparison = comparisonIndicators.some(ind => queryLower.includes(ind));
-                if (isComparison && content.length > 200) {
-                    enhanced = '## 📊 Comparison\n\n' + enhanced;
-                }
-                // Detect step-by-step
+                if (isComparison && content.length > 200) enhanced = '## 📊 Comparison\n\n' + enhanced;
                 const stepIndicators = ['step', 'how to', 'guide', 'tutorial', 'walkthrough', 'instructions'];
                 const isStepByStep = stepIndicators.some(ind => queryLower.includes(ind));
-                if (isStepByStep && !content.match(/^\d+\./m)) {
-                    enhanced = '## 📋 Step-by-Step Guide\n\n' + enhanced;
-                }
-                // Detect lists
+                if (isStepByStep && !content.match(/^\d+\./m)) enhanced = '## 📋 Step-by-Step Guide\n\n' + enhanced;
                 if ((queryLower.includes('list') || queryLower.includes('features') || queryLower.includes(
                         'examples')) && !content.includes('- ')) {
                     const lines = content.split('\n').filter(l => l.trim());
-                    if (lines.length >= 3 && lines.length <= 15) {
-                        enhanced = lines.map(l => '- ' + l.trim()).join('\n');
-                    }
+                    if (lines.length >= 3 && lines.length <= 15) enhanced = lines.map(l => '- ' + l.trim()).join(
+                        '\n');
                 }
                 return enhanced;
             }
 
-            // ═══════════════════════════════════════════
+            //
+         ═══════════════════════════════════════════
             // RENDER CHAT LIST
             // ═══════════════════════════════════════════
             function renderChatList() {
@@ -1918,10 +1885,6 @@
                 }
             }
 
-            //
-         ═══════════════════════════════════════════
-            // RENDER MESSAGES
-            // ═══════════════════════════════════════════
             function renderMessages() {
                 const chat = getCurrentChat();
                 conversation.innerHTML = '';
@@ -1985,12 +1948,8 @@
                 requestAnimationFrame(() => { conversation.scrollTop = conversation.scrollHeight; });
             }
 
-            // ═══════════════════════════════════════════
-            // BUILD SYSTEM PROMPT FROM MEMORY & CONTEXT
-            // ═══════════════════════════════════════════
             function buildSystemContext() {
                 let context = '';
-                // Include relevant memories
                 if (memoryItems.length > 0) {
                     const recent = memoryItems.slice(-15);
                     const categorized = {};
@@ -2004,12 +1963,11 @@
                         context += items.map(i => `- ${i}`).join('\n') + '\n';
                     }
                 }
-                // Include active tools
                 const enabledTools = Object.entries(activeTools).filter(([_, v]) => v).map(([k]) => k);
                 if (enabledTools.length > 0) {
                     context += `\n## Active Tools: ${enabledTools.join(', ')}\n`;
                     if (activeTools['thinking']) context +=
-                        '- Thinking Mode: Show your reasoning process before the final answer.\n';
+                        '- Thinking Mode: Show reasoning process before final answer.\n';
                     if (activeTools['deep-analysis']) context +=
                         '- Deep Analysis: Provide thorough, multi-layered analysis.\n';
                     if (activeTools['code-interpreter']) context +=
@@ -2018,23 +1976,21 @@
                         '- Writing Assistant: Polish grammar, improve style and clarity.\n';
                     if (activeTools['research']) context +=
                         '- Research Assistant: Provide comprehensive, well-structured research summaries.\n';
-                    if (activeTools['translate']) context +=
-                        '- Translation: Translate content when needed.\n';
-                    if (activeTools['ocr']) context +=
-                        '- OCR: Extract and analyze text from images.\n';
+                    if (activeTools['translate']) context += '- Translation: Translate content when needed.\n';
+                    if (activeTools['ocr']) context += '- OCR: Extract and analyze text from images.\n';
                 }
                 return context;
             }
 
             // ═══════════════════════════════════════════
-            // STREAMING & API COMMUNICATION
+            // STREAMING & API (FULLY WORKING)
             // ═══════════════════════════════════════════
             async function sendMessage(content) {
                 if (isGenerating || !content.trim()) return;
                 const chat = getCurrentChat();
                 if (!chat) return;
                 const modelConfig = getEffectiveModelConfig();
-                if (modelConfig.apiKey && modelConfig.apiKey.startsWith('YOUR_API_KEY')) {
+                if (!modelConfig || !modelConfig.apiKey || modelConfig.apiKey.includes('YOUR_API_KEY')) {
                     showToast('⚠️ Please configure your API keys in CONFIG.models');
                     return;
                 }
@@ -2085,51 +2041,33 @@
                 try {
                     const messagesForAPI = [];
                     const systemCtx = buildSystemContext();
-                    if (systemCtx) {
-                        messagesForAPI.push({ role: 'system', content: systemCtx });
-                    }
-                    // Add chat history
+                    if (systemCtx) messagesForAPI.push({ role: 'system', content: systemCtx });
                     const historyMsgs = chat.messages.filter(m => m.role === 'user' || m.role === 'assistant').slice(
                         -25);
                     for (const m of historyMsgs) {
                         if (m.id === assistantMsgId) continue;
                         const apiMsg = { role: m.role, content: m.content };
-                        // Handle images for vision-capable models
                         if (m.images && m.images.length > 0 && m.role === 'user') {
                             const parts = [{ type: 'text', text: m.content }];
-                            for (const img of m.images) {
-                                parts.push({ type: 'image_url', image_url: { url: img } });
-                            }
+                            for (const img of m.images) parts.push({ type: 'image_url', image_url: { url: img } });
                             apiMsg.content = parts;
                         }
                         messagesForAPI.push(apiMsg);
                     }
-                    // Add current user message with images
                     const currentApiMsg = { role: 'user', content: content.trim() };
                     if (sentImages.length > 0) {
                         const parts = [{ type: 'text', text: content.trim() }];
-                        for (const img of sentImages) {
-                            parts.push({ type: 'image_url', image_url: { url: img } });
-                        }
+                        for (const img of sentImages) parts.push({ type: 'image_url', image_url: { url: img } });
                         currentApiMsg.content = parts;
                     }
                     messagesForAPI.push(currentApiMsg);
-                    // Add file context if any
                     if (sentFiles.length > 0) {
-                        const fileContexts = [];
-                        for (const file of sentFiles) {
-                            if (file.content) {
-                                fileContexts.push(
-                                    `[File: ${file.name}]\nContent:\n${file.content.slice(0,4000)}`);
-                            }
-                        }
-                        if (fileContexts.length > 0) {
-                            messagesForAPI.push({
-                                role: 'system',
-                                content: 'The user has uploaded the following files for analysis:\n\n' +
-                                    fileContexts.join('\n\n')
-                            });
-                        }
+                        const fileContexts = sentFiles.map(f =>
+                            `[File: ${f.name}]\nContent:\n${f.content.slice(0,4000)}`);
+                        messagesForAPI.push({
+                            role: 'system',
+                            content: 'Uploaded files for analysis:\n\n' + fileContexts.join('\n\n')
+                        });
                     }
                     const response = await fetch(CONFIG.endpoint, {
                         method: 'POST',
@@ -2184,12 +2122,11 @@
                                     highlightCodeBlocks(streamEl);
                                     scrollToBottom();
                                 }
-                            } catch (e) { /* skip malformed */ }
+                            } catch (e) {}
                         }
                     }
                     const cursorEl = streamEl.querySelector('.typing-cursor');
                     if (cursorEl) cursorEl.remove();
-                    // Apply auto-format enhancement
                     const enhanced = detectAndEnhanceFormatting(currentStreamContent, content.trim());
                     if (enhanced !== currentStreamContent) {
                         currentStreamContent = enhanced;
@@ -2203,9 +2140,8 @@
                     if (chat.title === 'New Conversation' || chat.messages.filter(m => m.role === 'user').length <=
                         2) {
                         const titleCandidate = currentStreamContent.slice(0, 65).replace(/[#*`\n]/g, ' ').trim();
-                        if (titleCandidate.length > 5) {
-                            chat.title = titleCandidate + (currentStreamContent.length > 65 ? '…' : '');
-                        }
+                        if (titleCandidate.length > 5) chat.title = titleCandidate + (currentStreamContent.length >
+                            65 ? '…' : '');
                     }
                 } catch (err) {
                     if (thinkingEl.parentNode) thinkingEl.remove();
@@ -2291,7 +2227,7 @@
 
             //
          ═══════════════════════════════════════════
-            // TOAST NOTIFICATIONS
+            // TOAST
             // ═══════════════════════════════════════════
             function showToast(message) {
                 const existing = document.querySelector('.toast');
@@ -2317,9 +2253,9 @@
                 overlay.innerHTML = `
               <div class="modal">
                 <h2>🧠 Memory Manager</h2>
-                <p style="font-size:0.8rem;color:var(--text3);margin-bottom:12px;">Store preferences, projects, learning goals, and more. NOVA uses these to personalize responses.</p>
+                <p style="font-size:0.8rem;color:var(--text3);margin-bottom:12px;">Store preferences, projects, learning goals, and more.</p>
                 <div style="display:flex;gap:8px;margin-bottom:8px;">
-                  <input type="text" id="mem-category" placeholder="Category (e.g., Projects, Goals)" style="flex:1;">
+                  <input type="text" id="mem-category" placeholder="Category (e.g., Projects)" style="flex:1;">
                   <input type="text" id="mem-key" placeholder="Key" style="flex:1;">
                 </div>
                 <textarea id="mem-value" placeholder="Value…" rows="3"></textarea>
@@ -2336,15 +2272,14 @@
                 function renderMemList() {
                     const listDiv = overlay.querySelector('#memory-list');
                     listDiv.innerHTML = memoryItems.length === 0 ?
-                        '<div style="color:var(--text3);padding:16px;">No memories stored yet. Add your first memory above.</div>' :
+                        '<div style="color:var(--text3);padding:16px;">No memories stored yet.</div>' :
                         memoryItems.map(m => `
                     <div class="memory-card">
                       <div style="flex:1;min-width:0;">
                         <span class="mem-cat">[${escapeHtml(m.category)}]</span>
-                        <strong style="font-size:0.84rem;">${escapeHtml(m.key)}</strong>
-                        <span style="color:var(--text2);font-size:0.78rem;">: ${escapeHtml(m.value.slice(0,80))}</span>
+                        <strong>${escapeHtml(m.key)}</strong>: ${escapeHtml(m.value.slice(0,80))}
                       </div>
-                      <button class="btn-delete-mem" data-mem-id="${m.id}" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:1.1rem;">×</button>
+                      <button class="btn-delete-mem" data-mem-id="${m.id}" style="background:none;border:none;color:var(--red);cursor:pointer;">×</button>
                     </div>`).join('');
                 }
                 renderMemList();
@@ -2417,12 +2352,11 @@
                     } else {
                         const reader = new FileReader();
                         reader.onload = function(e) {
-                            const content = e.target.result;
                             uploadedFiles.push({
                                 name: file.name,
                                 type: file.type,
                                 size: file.size,
-                                content: content
+                                content: e.target.result
                             });
                             showToast('📎 File loaded: ' + file.name);
                         };
@@ -2448,8 +2382,9 @@
                 }
             }
 
-            // ═══════════════════════════════════════════
-            // VOICE (Web Speech API)
+            //
+         ═══════════════════════════════════════════
+            // VOICE
             // ═══════════════════════════════════════════
             let isRecording = false;
             let recognition = null;
@@ -2486,7 +2421,7 @@
                 if (!isRecording) return;
                 isRecording = false;
                 $('#btn-voice').classList.remove('recording');
-                if (recognition) try { recognition.stop(); } catch (e) { /* */ }
+                if (recognition) try { recognition.stop(); } catch (e) {}
             }
 
             function speakText(text) {
@@ -2613,14 +2548,13 @@
                 });
                 overlay.querySelector('#btn-close-settings').addEventListener('click', () => overlay.remove());
                 overlay.querySelector('#btn-clear-history').addEventListener('click', () => {
-                    if (confirm('Delete ALL conversations? This cannot be undone.')) {
+                    if (confirm('Delete ALL conversations?')) {
                         chats = [createChat('Welcome Chat')];
                         currentChatId = chats[0].id;
                         renderMessages();
                         renderChatList();
                         saveState();
                         overlay.remove();
-                        showToast('🗑 All history cleared');
                     }
                 });
                 overlay.querySelector('#btn-export-data').addEventListener('click', () => {
@@ -2630,7 +2564,7 @@
                     const url = URL.createObjectURL(blob);
                     const a = document.createElement('a');
                     a.href = url;
-                    a.download = 'nova-full-backup-' + new Date().toISOString().slice(0, 10) + '.json';
+                    a.download = 'nova-backup-' + new Date().toISOString().slice(0, 10) + '.json';
                     a.click();
                     URL.revokeObjectURL(url);
                 });
@@ -2659,7 +2593,6 @@
                                 updateToolsUI();
                                 saveState();
                                 overlay.remove();
-                                showToast('📥 Data imported');
                             } catch { showToast('❌ Invalid file'); }
                         };
                         reader.readAsText(file);
@@ -2692,7 +2625,8 @@
                 });
             }
 
-            // ═══════════════════════════════════════════
+            //
+         ═══════════════════════════════════════════
             // SIDEBAR LOGIC
             // ═══════════════════════════════════════════
             function toggleSidebar() {
@@ -2743,11 +2677,10 @@
                 renderMessages();
                 renderChatList();
                 saveState();
-                showToast('🗑 Conversation deleted');
             }
 
             // ═══════════════════════════════════════════
-            // EVENT HANDLERS
+            // EVENT WIRING
             // ═══════════════════════════════════════════
             sendBtn.addEventListener('click', () => {
                 const content = userInput.value.trim();
@@ -2816,9 +2749,7 @@
                     navigator.clipboard.writeText(e.target.dataset.content).then(() => showToast('📋 Copied!'));
                 }
                 if (e.target.classList.contains('btn-regenerate')) regenerateLast();
-                if (e.target.classList.contains('btn-speak-msg')) {
-                    speakText(e.target.dataset.content);
-                }
+                if (e.target.classList.contains('btn-speak-msg')) speakText(e.target.dataset.content);
                 if (e.target.classList.contains('btn-delete-msg')) {
                     const msgEl = e.target.closest('.message');
                     const msgId = msgEl?.dataset.msgId;
@@ -2914,9 +2845,8 @@
                 }
             });
 
-            //
-         ═══════════════════════════════════════════
-            // INITIALIZATION
+            // ═══════════════════════════════════════════
+            // INIT
             // ═══════════════════════════════════════════
             function init() {
                 loadState();
@@ -2937,13 +2867,8 @@
                 initParticles();
                 initVoice();
                 userInput.focus();
-                console.log('%c🚀 NOVA AI v1.1 %cready',
-                    'font-size:1.5em;font-weight:bold;color:var(--accent);',
-                    'font-size:1em;color:var(--text2);');
-                console.log('%cConfigure API keys in CONFIG.models at the top of the script.',
-                    'color:var(--text3);');
-                console.log('%cModes: Nova 1.1 | Nova HyperOS | Nova Extent 2.3',
-                    'color:var(--accent2);');
+                console.log('🚀 NOVA AI v1.1 ready — All buttons functional');
+                console.log('Configure API keys in CONFIG.models');
             }
             init();
         })();
